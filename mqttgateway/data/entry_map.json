@@ -1,0 +1,54 @@
+{
+	"root": "home",
+	"topics": [
+		"home/security/+/frontgarden/+/+/C",
+		"home/+/entry2mqtt/+/+/+/C",
+		"home/+/+/+/entrysystem/+/C"
+	],
+	"function": {
+		"map": {
+			"security": "Security",
+			"lighting": "Lighting"
+		},
+		"maptype": "strict"
+	},
+	"gateway": {
+		"map": {
+			"entry2mqtt": "entry2mqtt"
+		},
+		"maptype": "strict"
+	},
+	"location": {
+		"map": {
+			"frontgarden": "gate_entry"
+		},
+		"maptype": "strict"
+	},
+	"device": {
+		"map": {
+			"gate": "Gate",
+			"bell": "Bell"
+		},
+		"maptype": "strict"
+	},
+	"sender": {
+		"maptype": "none"
+	},
+	"action": {
+		"map": {
+			"gate_open": "GATE_OPEN",
+			"bell_off": "BELL_OFF",
+			"bell_on": "BELL_ON",
+			"light_off": "LIGHT_OFF",
+			"light_on": "LIGHT_ON",
+			"gate_close": "GATE_CLOSE"
+		},
+		"maptype": "strict"
+	},
+	"argkey": {
+		"maptype": "none"
+	},
+	"argvalue": {
+		"maptype": "none"
+	}
+}
