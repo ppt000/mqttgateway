@@ -1,0 +1,11 @@
+{
+  "topics": [
+    "home/lighting/#",
+    "home/+/office/#"
+  ],
+  "root": "home",
+  "function": {
+    "office": "Office",
+    "kitchen": "Kitchen"
+  }
+}

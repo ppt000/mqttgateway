@@ -1,0 +1,34 @@
+{
+	"root": "home",
+	"topics": ["home/+/dummy/+/+/+/C", "home/audiovideo/+/+/+/+/C"],
+	"function": {"map": {"audiovideo": "AudioVideo", "lighting": "Lighting"}, "maptype": "strict"},
+	"gateway": {"map": {"dummy": "Dummy"}, "maptype": "strict"},
+	"location": {
+		"map": {
+			"dining_room": "DiningRm",
+			"office": "Office",
+			"kitchen": "Kitchen"
+		},
+		"maptype": "strict"
+	},
+	"device": {"maptype": "none"},
+	"sender": {"maptype": "none"},
+	"action": {
+		"map": {
+			"mute_toggle": "MUTE_TGL",
+			"audio_on": "POWER_ON",
+			"source_cd": "SOURCE_CD",
+			"mute_off": "MUTE_OFF",
+			"mute_on": "MUTE_ON",
+			"source_tuner": "SOURCE_TUNER",
+			"volume_down": "VOL_DN",
+			"light_off": "LIGHT_OFF",
+			"light_on": "LIGHT_ON",
+			"audio_off": "POWER_OFF",
+			"volume_up": "VOL_UP"
+		},
+		"maptype": "strict"
+	},
+	"argkey": {"maptype": "none"},
+	"argvalue": {"maptype": "none"}
+}
