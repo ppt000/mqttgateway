@@ -61,7 +61,7 @@ topics: home/dummyfunction/#, home/+/dummy/#
 #   The default name used is <*application_name*.log>.
 #   Make sure the process will have the rights to write in this file.
 #   See below for other instructions on file names and paths.
-logfilename: .
+logfilename:
 
 # Turn debug 'on' if logging of all DEBUG level messages is required, otherwise its INFO
 debug: off
