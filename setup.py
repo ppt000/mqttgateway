@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 from codecs import open
 from os import path
@@ -28,18 +28,13 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
         ],
     keywords='mqtt gateway',
-    package_dir={'':'mqttgateway'},
-    packages=['gateway', 'dummy', 'entry'],
+    #package_dir={'':'mqttgateway'},
+    packages=find_packages(),
     install_requires=['paho-mqtt >= 1.3.1'],
-    #package_data={'mqtt_gateways': ['data/*.map', 'data/*.conf']},
-    exclude_package_data={'': ['README.*']},
-    entry_points={'console_scripts': ['dummy2mqtt = mqtt_gateways.dummy.dummy2mqtt:__main__'],
-                  'console_scripts': ['entry2mqtt = mqtt_gateways.entry.entry2mqtt:__main__'],
-                  'console_scripts': ['musiccast2mqtt = mqtt_gateways.musiccast.musiccast2mqtt:__main__']}
+    package_data={'': ['*.conf', '*.json']},
+    #exclude_package_data={'': ['README.*']},
+    entry_points={'console_scripts': ['dummy2mqtt = mqttgateway.dummy.dummy2mqtt:main']}
+    #              'console_scripts': ['entry2mqtt = mqttgateway.entry.entry2mqtt:__main__']}
 )
