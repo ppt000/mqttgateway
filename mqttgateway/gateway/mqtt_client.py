@@ -141,9 +141,8 @@ class mgClient(mqtt.Client):
         self.connected = False
         #self.userdata['connected'] = False # connection state, to be set in the callbacks
 
-        # Connection oarameters reset below are already done in method "connect()"
-        #self.connect_time = 0 # time of connection request
-        #self.lag_test = self.lag_end # this is a 'function attribute', like a method.
+        self.connect_time = 0 # time of connection request
+        self.lag_test = self.lag_end # this is a 'function attribute', like a method.
 
         super(mgClient, self).__init__(client_id=client_id, clean_session=True,
                                        userdata=userdata, protocol=mqtt.MQTTv311, transport='tcp')
@@ -171,15 +170,18 @@ class mgClient(mqtt.Client):
     def connect(self):
         try:
             super(mgClient, self).connect(self.host, self.port, self.keepalive)
-            self.connect_time = time.time()
-            self.lag_test = self.lag_end
         except (OSError, IOError) as err:
             # the loop will try to reconnect anyway so just log an info
-            _logger.info('Client can''t connect to broker with error ', repr(err))
+            _logger.info(''.join(('Client can''t connect to broker with error ', repr(err))))
+        self.connect_time = time.time()
+        self.lag_test = self.lag_end
         return
 
     def reconnect(self):
-        super(mgClient, self).reconnect()
+        try:
+            super(mgClient, self).reconnect()
+        except (OSError, IOError) as err:
+            _logger.info(''.join(('Client can''t reconnect to broker with error ', repr(err))))
         self.connect_time = time.time()
         self.lag_test = self.lag_end
 
