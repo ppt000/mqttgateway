@@ -17,6 +17,9 @@ import mqttgateway.gateway.start_gateway as start_g
 # import the module representing the interface *** change to your import here ***
 import mqttgateway.dummy.dummy_interface as dummy_i
 
-if __name__ == '__main__':
+def main():
     # launch the gateway *** change to your class here ***
     start_g.startgateway(dummy_i.dummyInterface)
+
+if __name__ == '__main__':
+    main()
