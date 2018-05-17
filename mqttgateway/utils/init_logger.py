@@ -50,8 +50,8 @@ def initlogger(logger, logfiledata, emaildata):
     Raises:
         any IOErrors thrown by file handling methods are caught.
     '''
-    log_level = logging.INFO
-    logger.setLevel(log_level) # to log this function logs
+
+    logger.setLevel(logging.DEBUG) # to log ALL this function logs
     #===========================================================================
     # Reminder of various format options:
     # %(processName)s is always <MainProcess>
@@ -64,7 +64,7 @@ def initlogger(logger, logfiledata, emaildata):
     # create the stream handler. It should always work.
     formatter = logging.Formatter('%(name)-20s %(levelname)-8s: %(message)s')
     stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(logging.INFO) # set the level to INFO temporarily to log what happens in this module
+    stream_handler.setLevel(logging.DEBUG) # set level temporarily to log all in this function
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
     # assign the logfiledata for clarity
@@ -85,15 +85,12 @@ def initlogger(logger, logfiledata, emaildata):
         except (OSError, IOError) as err: # there was a problem with the file
             logger.error(''.join(('There was an error <', str(err), '> using file <', log_filepath,
                                   '> to handle logs. No file used.')))
-            log_level = logging.WARN
         else:
             logger.info(''.join(('Using <', log_filepath, '> to log the ',
                                  'DEBUG' if log_debug else 'INFO', ' level.')))
             file_handler.setLevel(logging.DEBUG if log_debug else logging.INFO)
             file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)
-            log_level = logging.DEBUG if log_debug else logging.INFO
-    else: log_level = logging.WARN
     # create the email handler.
     #TODO: if anything is wrong here the handler will trigger an error only when
     #      an email will be sent. Check how to check this in advance.
@@ -108,8 +105,8 @@ def initlogger(logger, logfiledata, emaildata):
         email_handler.setFormatter(formatter)
         logger.addHandler(email_handler)
 
-    logger.setLevel(log_level)
-    stream_handler.setLevel(logging.WARN)
-
+    stream_handler.setLevel(logging.WARN) # restore the level of the default handler
+    # TODO: set the level of the logger to the minimum level needed?
+    
 if __name__ == '__main__':
     pass
