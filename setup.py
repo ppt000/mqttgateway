@@ -30,7 +30,6 @@ setup(
         'Programming Language :: Python :: 2.7',
         ],
     keywords='mqtt gateway',
-    #package_dir={'':'mqttgateway'},
     packages=find_packages(),
     install_requires=['paho-mqtt >= 1.3.1'],
     package_data={'': ['*.conf', '*.json']},
