@@ -65,10 +65,12 @@ def __get_path(extension, path_given=None):
         filepath = os.path.join(dirname, filename)
     return os.path.normpath(filepath)
 
-def __init_properties(full_path):
-    name = os.path.splitext(os.path.basename(full_path))[0] # first part of the filename, without extension
+def __init_properties(full_path, app_name=None):
+    ''' docstring '''
+    if app_name is None:
+        app_name = os.path.splitext(os.path.basename(full_path))[0] # first part of the filename, without extension
     path = os.path.realpath(os.path.dirname(full_path)) # full path of the launching script
-    root_logger = logging.getLogger(name)
-    _THIS.Properties = AppProperties(name, path, root_logger, __dummy, __get_path, __get_logger)
+    root_logger = logging.getLogger(app_name)
+    _THIS.Properties = AppProperties(app_name, path, root_logger, __dummy, __get_path, __get_logger)
 
 Properties = AppProperties('', '', None, __init_properties, __dummy, __dummy)
