@@ -149,10 +149,12 @@ def startgateway(gateway_interface):
         msglist_in.push(internal_msg)
 
     # Initialise the MQTT client and connect.
+    client_id = cfg.get('MQTT', 'clientid')
+    if not client_id: client_id = app.Properties.name
     mqttclient = mqtt.mgClient(host=cfg.get('MQTT', 'host'),
                                port=cfg.getint('MQTT', 'port'),
                                keepalive=cfg.getint('MQTT', 'keepalive'),
-                               client_id=app.Properties.name,
+                               client_id=client_id,
                                on_msg_func=process_mqttmsg,
                                topics=messagemap.topics) #, userdata=localdata)
 

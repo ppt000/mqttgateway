@@ -28,6 +28,9 @@ host: 127.0.0.1
 port: 1883
 keepalive: 60
 
+# The client id can be provided here; if left empty it defaults to the application name
+clientid:
+
 # This is the timeout of the 'loop()' call in the MQTT library
 timeout: 0.01
 
