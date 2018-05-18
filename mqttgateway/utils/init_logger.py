@@ -21,13 +21,13 @@ def initlogger(logger, logfiledata, emaildata):
     hierarchical logging is the objective. The logger is then initialised with
     the following handlers:
 
-    - the standard 'Stream' handler will always log level WARN and above;
-    - a rotating file handler, with fixed parameters (max 50kB, 3 rollover
+    * the standard 'Stream' handler will always log level WARN and above;
+    * a rotating file handler, with fixed parameters (max 50kB, 3 rollover
       files); the level for this handler is DEBUG if the parameter 'log_debug' is
       True, INFO otherwise; the file name for this log is given by the
       log_filepath parameter which is used as is; an error message is logged in
       the standard handler if there was a problem creating the file;
-    - an email handler with the level set to CRITICAL;
+    * an email handler with the level set to CRITICAL;
 
     Args:
         logger: the actual logger object to be initialised;
