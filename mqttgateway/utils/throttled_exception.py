@@ -16,7 +16,7 @@ as normal ones and ignore the ``trigger`` and ``report`` members.
 
 Usage:
 
-.. code-block:: none
+.. code-block:: python
 
     try:
         some statements that might raise your own exception derived from ThrottledException
