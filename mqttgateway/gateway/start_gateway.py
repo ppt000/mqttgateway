@@ -98,13 +98,13 @@ def startgateway(gateway_interface):
 
     # Warn in case of error processing the configuration file.
     if cfg.has_section('CONFIG') and cfg.has_option('CONFIG', 'error'):
-        raise OSError(''.join(('Error <', cfg.get('CONFIG', 'error'), '> while processing the configuration file.')))
-
+        logger.critical(''.join(('Error while processing the configuration file:\n\t',
+                                 cfg.get('CONFIG', 'error'), '\n ABORT!')))
+        raise SystemExit
 
     # Create 2 message lists, one incoming, the other outgoing
     msglist_in = mqtt_map.MsgList()
     msglist_out = mqtt_map.MsgList()
-
 
     # Instantiate the gateway interface.
     interfaceparams = {} # the parameters for the interface from the configuration file
@@ -121,7 +121,8 @@ def startgateway(gateway_interface):
             with open(mapfilepath, 'r') as mapfile:
                 map_data = json.load(mapfile)
         except (OSError, IOError) as err:
-            raise OSError(''.join(('Error <', str(err), '> with map file <', mapfilepath, '>.')))
+            logger.critical(''.join(('Error <', str(err), '> with map file <', mapfilepath, '>.')))
+            raise SystemExit
     else:
         mqtt_map.NO_MAP['root'] = cfg.get('MQTT', 'root')
         mqtt_map.NO_MAP['topics'] = [topic.strip() for topic in cfg.get('MQTT', 'topics').split(',')]
