@@ -97,7 +97,7 @@ def initlogger(logger, logfiledata, emaildata):
     email_host = emaildata [:2]
     email_address = emaildata[2]
     app_name = emaildata[3]
-    if email_host is not None and email_address is not None:
+    if email_host[0] and email_host[1] and email_address:
         email_handler = logging.handlers. \
         SMTPHandler(email_host, email_address, email_address,
                     ''.join(('Error message from application ', app_name, '.')))
