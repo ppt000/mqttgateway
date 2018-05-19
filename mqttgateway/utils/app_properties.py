@@ -9,12 +9,13 @@ import sys
 
 _THIS = sys.modules[__name__]
 
-AppProperties = namedtuple('AppProperties', ('name', 'path', 'root_logger', 'init', 'get_path', 'get_logger'))
+AppProperties = namedtuple('AppProperties', ('name', 'path', 'cwdir', 'root_logger',
+                                             'init', 'get_path', 'get_logger'))
 
-def __dummy(*args, **kwargs):
+def _dummy(*args, **kwargs):
     pass
 
-def __get_logger(fullmodulename):
+def _get_logger(fullmodulename):
     ''' docstring '''
     if fullmodulename == '__main__' or fullmodulename == _THIS.Properties.name:
         logname = _THIS.Properties.name
@@ -24,9 +25,11 @@ def __get_logger(fullmodulename):
         else: logname = '.'.join((_THIS.Properties.name, modulename))
     return logging.getLogger(logname)
 
-def __get_path(extension, path_given=None):
+def _get_path_old(extension, path_given=None):
     '''
     Generates the full absolute path of a file.
+
+    **NOTE**: this docstring is obsolete...
 
     This function builds an absolute path to a file based on 3 'default' arguments
     (the basename of the file, the extension of the file, and an absolute path) and
@@ -50,6 +53,7 @@ def __get_path(extension, path_given=None):
         absdirpath (string): the absolute path of the current application
         ext (string): the extension of the file, in the form '.xxx'. i.e. with the dot
         pathgiven (string): the path given as alternative to the default
+
     Returns:
         string: a full absolute path
     '''
@@ -65,12 +69,30 @@ def __get_path(extension, path_given=None):
         filepath = os.path.join(dirname, filename)
     return os.path.normpath(filepath)
 
-def __init_properties(full_path, app_name=None):
+def _get_path(extension, path_given):
+    if extension[0] != '.': extension = '.' + extension # just in case
+    if not path_given or path_given == '.': path_given = './'
+    if path_given == '..': path_given = '../'
+    dirname, filename = os.path.split(path_given.strip())
+    if filename == '': filename = ''.join((_THIS.Properties.name, extension)) # default name
+    dirname = os.path.normpath(dirname) # not sure it is necessary
+    if os.path.isabs(dirname):
+        return os.path.normpath(os.path.join(dirname, filename))
+    else: # dirname is relative
+        paths = [os.path.normpath(os.path.join(pth, dirname, filename))
+                 for pth in (_THIS.Properties.cwdir, _THIS.Properties.path)]
+        for pth in paths:
+            if os.path.exists(pth): return pth
+        return paths[0] # even if it will fail, return the path with the current working directory
+
+def _init_properties(full_path, app_name=None):
     ''' docstring '''
     if app_name is None:
         app_name = os.path.splitext(os.path.basename(full_path))[0] # first part of the filename, without extension
     path = os.path.realpath(os.path.dirname(full_path)) # full path of the launching script
+    cwdir = os.getcwd()
     root_logger = logging.getLogger(app_name)
-    _THIS.Properties = AppProperties(app_name, path, root_logger, __dummy, __get_path, __get_logger)
+    _THIS.Properties = AppProperties(app_name, path, cwdir, root_logger,
+                                     _dummy, _get_path, _get_logger)
 
-Properties = AppProperties('', '', None, __init_properties, __dummy, __dummy)
+Properties = AppProperties('', '', '', None, _init_properties, _dummy, _dummy)
