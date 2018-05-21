@@ -1,12 +1,12 @@
 
-
-The documentation in ``docs/source`` is formatted to be read in `ReadTheDocs <http://mqtt-gateways.readthedocs.io/>`_.
+The documentation in ``docs/source`` is formatted to be read in
+`ReadTheDocs <http://mqttgateway.readthedocs.io/>`_.
 Head there to browse it.
 
-Welcome to MQTT_Gateways
-=========================
+Welcome to MQTTGateway
+======================
 
-``mqtt_gateways`` is a python wrapper to build consistent gateways to MQTT networks.
+``mqttgateway`` is a python wrapper to build consistent gateways to MQTT networks.
 
 .. image:: docs/source/basic_diagram.png
    :scale: 30%
@@ -34,7 +34,9 @@ to build gateways with their devices that are not MQTT enabled.
 Available gateways
 ------------------
 
-The repository contains some already developed gateways to existing systems.
 The currently available gateways are:
 
-- **C-Bus**: gateway to the Clipsal-Schneider C-Bus system, via its PCI Serial Interface.
+- `MusicCast <https://github.com/ppt000/musiccast2mqtt>`_: gateway to Yamaha MusicCast enabled devices, via their HTTP API.
+
+..
+  - **C-Bus**: gateway to the Clipsal-Schneider C-Bus system, via its PCI Serial Interface.
