@@ -74,8 +74,9 @@ def _on_connect(client, userdata, flags, return_code):
         elif result != mqtt.MQTT_ERR_SUCCESS:
             _logger.info(''.join(('Unrecognised result <', str(result), '> during subscription.')))
         else:
-            _logger.debug(''.join(('Subscriptions successful to topics <', str(client.topics),
-                                   '> with message id <', str(mid), '>.')))
+            _logger.debug(''.join(('Message id <', str(mid),
+                                   '>: subscriptions successful to list of (topics, qos):\n\t',
+                                   str(client.topics))))
     return
 
 def _on_subscribe(client, userdata, mid, granted_qos):
@@ -149,6 +150,7 @@ class mgClient(mqtt.Client):
         self.on_connect = _on_connect
         self.on_disconnect = _on_disconnect
         self.on_message = _on_message
+        self.on_subscribe = _on_subscribe
         self.connect()
         return
 
