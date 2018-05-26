@@ -1,5 +1,4 @@
 
-Full documentation is available `here <http://mqttgateway.readthedocs.io/>`_.
 
 ######################
 Welcome to mqttgateway
@@ -27,8 +26,9 @@ MQTT messages and to build gateways with their devices that are not MQTT enabled
 Available interfaces
 ====================
 
-Check in the related repos some fully developped interfaces.  Their names usually follows the
-pattern **<interface_name>2mqtt**, for example **musiccast2mqtt**.
+Check the existing fully developped interfaces.  Their names usually follows the
+pattern **<interface_name>2mqtt**, for example
+`musiccast2mqtt <https://musiccast2mqtt.readthedocs.io/>`_.
 
 This library comes with 2 interfaces:
 
