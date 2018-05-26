@@ -37,3 +37,10 @@ This library comes with 2 interfaces:
 
 ..
   - **C-Bus**: gateway to the Clipsal-Schneider C-Bus system, via its PCI Serial Interface.
+
+Links
+=====
+
+Documentation on `readthedocs <http://mqttgateway.readthedocs.io/>`_.
+Source on `github <https://github.com/ppt000/mqttgateway>`_.
+Distribution on `pypi <https://pypi.org/project/mqttgateway/>`_.

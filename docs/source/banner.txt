@@ -1,3 +1,4 @@
-.. warning::
+..
+    warning::
     This version is still under development.
     The next version will be 0.3.
