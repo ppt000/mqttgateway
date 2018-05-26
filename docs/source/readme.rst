@@ -41,6 +41,6 @@ This library comes with 2 interfaces:
 Links
 =====
 
-Documentation on `readthedocs <http://mqttgateway.readthedocs.io/>`_.
-Source on `github <https://github.com/ppt000/mqttgateway>`_.
-Distribution on `pypi <https://pypi.org/project/mqttgateway/>`_.
+- **Documentation** on `readthedocs <http://mqttgateway.readthedocs.io/>`_.
+- **Source** on `github <https://github.com/ppt000/mqttgateway>`_.
+- **Distribution** on `pypi <https://pypi.org/project/mqttgateway/>`_.
