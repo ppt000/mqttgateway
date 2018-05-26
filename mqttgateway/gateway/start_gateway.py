@@ -73,10 +73,7 @@ def startgateway(gateway_interface):
     '''
 
     # Load the configuration. Check the first command line argument for the filename.
-    if len(sys.argv) >= 2: pathgiven = sys.argv[1].strip()
-    else: pathgiven = '' # default location in case no file name or path is given
-    conffilepath = app.Properties.get_path('.conf', pathgiven)
-    cfg = loadconfig(CONFIG, conffilepath)
+    cfg = loadconfig(CONFIG, app.Properties.config_file_path)
 
     # Initialise the logger handlers
     logfilename = cfg.get('LOG', 'logfilename')
