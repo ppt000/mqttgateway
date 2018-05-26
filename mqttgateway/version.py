@@ -1,3 +1,7 @@
 ''' Current version of mqttgateway'''
 
-version = '0.212'
+# test.pypi.org
+#version = '0.212'
+
+# pypi.org
+version = '0.201'

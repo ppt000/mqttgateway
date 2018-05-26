@@ -1,7 +1,3 @@
-***********************************************************************
-This version is still under development.  The next version will be 0.3.
-*********************************************************************** 
-
 
 The documentation in ``docs/source`` is formatted to be read in
 `ReadTheDocs <http://mqttgateway.readthedocs.io/>`_.
@@ -11,7 +7,7 @@ Welcome to MQTTGateway
 
 ``mqttgateway`` is a python wrapper to build consistent gateways to MQTT networks.
 
-.. image:: docs/source/basic_diagram.png
+.. image:: basic_diagram.png
    :scale: 30%
    :align: right
 
