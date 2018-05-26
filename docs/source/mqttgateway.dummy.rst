@@ -4,10 +4,10 @@ mqttgateway.dummy package
 Submodules
 ----------
 
-mqttgateway.dummy.dummy2mqtt module
------------------------------------
+mqttgateway.dummy.dummy_start module
+------------------------------------
 
-.. automodule:: mqttgateway.dummy.dummy2mqtt
+.. automodule:: mqttgateway.dummy.dummy_start
     :members:
     :undoc-members:
     :show-inheritance:

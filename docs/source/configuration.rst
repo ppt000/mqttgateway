@@ -1,15 +1,10 @@
+*************
 Configuration
-=============
+*************
 
 .. note::
-	Coming soon!
+    Coming soon!
 
-.. old text
-	and some file locations (maps and log files)
-	if different from default.
-	The configuration file provided uses the sub-directory
-	``data`` for all files (which is not the default),
-	so that this installation (cloned from the repository) can work as is.
-	As a consequence, the log file will also be written in this directory.
-
-
+    In the meantime, the default configuration, which is in the python module
+    ``configuration.py`` inside the ``gateway`` package, is well documented
+    and is a good starting point to understand the various options.
