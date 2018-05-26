@@ -1,7 +1,10 @@
+.. warning::
+    This version is still under development.
+    The next version will be 0.3. 
+
 
 The documentation in ``docs/source`` is formatted to be read in
 `ReadTheDocs <http://mqttgateway.readthedocs.io/>`_.
-Head there to browse it.
 
 Welcome to MQTTGateway
 ======================
