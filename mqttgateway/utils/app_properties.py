@@ -79,7 +79,7 @@ def _get_logger(fullmodulename):
 def _get_path(extension, path_given, app_name=None, app_dirs=None):
     ''' docstring '''
     if app_name is None: app_name = _THIS.Properties.name
-    if app_dirs is None: app_dirs = _THIS.Properties.dirs
+    if app_dirs is None: app_dirs = _THIS.Properties.directories
     if extension[0] != '.': extension = '.' + extension # just in case
     if not path_given or path_given == '.': path_given = './'
     if path_given == '..': path_given = '../'
