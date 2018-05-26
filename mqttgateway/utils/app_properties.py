@@ -104,7 +104,7 @@ def _init_properties(app_path, app_name):
     if len(sys.argv) >= 2: pathgiven = sys.argv[1].strip()
     else: pathgiven = '' # default location in case no file name or path is given
     config_file_path = _get_path('.conf', pathgiven, app_name=app_name,
-                                 app_dirs=(current_working_dir,))
+                                 app_dirs=(current_working_dir, script_dir))
     config_file_dir = os.path.dirname(config_file_path)
     dirs = (config_file_dir, current_working_dir, script_dir)
     root_logger = logging.getLogger(app_name)
