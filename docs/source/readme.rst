@@ -32,8 +32,8 @@ pattern **<interface_name>2mqtt**, for example
 
 This library comes with 2 interfaces:
 
-- **dummy**: the template; check the :mod:`mqttgateway.dummy` documentation.
-- **entry**: example used for the :doc:`tutorial <tutorial>`.
+- **dummy**: to test the environment and use as a template;
+- **entry**: example used for the tutorial.
 
 ..
   - **C-Bus**: gateway to the Clipsal-Schneider C-Bus system, via its PCI Serial Interface.
