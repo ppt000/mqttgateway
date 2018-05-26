@@ -1,41 +1,39 @@
 
-The documentation in ``docs/source`` is formatted to be read in
-`ReadTheDocs <http://mqttgateway.readthedocs.io/>`_.
+Full documentation is available `here <http://mqttgateway.readthedocs.io/>`_.
 
-Welcome to MQTTGateway
-======================
+######################
+Welcome to mqttgateway
+######################
 
-``mqttgateway`` is a python wrapper to build consistent gateways to MQTT networks.
-
-.. image:: basic_diagram.png
-   :scale: 30%
-   :align: right
+``mqttgateway`` is a python wrapper to build consistent gateways to an MQTT network.
 
 What it does:
--------------
+=============
 
-* it deals with all the boilerplate code to manage an MQTT connection,
-  to load configuration and mapping data, and to create log handlers,
-* it encapsulates the interface in a class that needs only 2 methods
-  ``__init__`` and ``loop``,
-* it creates an intuitive messaging abstraction layer between the wrapper
-  and the interface,
-* it isolates the syntax and keywords of the MQTT network from the internals
-  of the interface.
+* it deals with all the boilerplate code to manage an MQTT connection, load configuration
+  and other data files, and create log handlers,
+* it encapsulates the interface in a class that needs only 2 methods ``__init__`` and ``loop``,
+* it creates an intuitive messaging abstraction layer between the wrapper and the interface,
+* it can isolate the syntax and keywords of the MQTT network from the internal ones of the interface.
+
 
 Who is it for:
---------------
+==============
 
-Developers of MQTT networks in a domestic environment, or *smart homes*,
-looking to adopt a definitive syntax for their MQTT messages and
-to build gateways with their devices that are not MQTT enabled.
+Developers of MQTT networks in a domestic environment looking to adopt a definitive syntax for their
+MQTT messages and to build gateways with their devices that are not MQTT enabled.
 
-Available gateways
-------------------
 
-The currently available gateways are:
+Available interfaces
+====================
 
-- `MusicCast <https://github.com/ppt000/musiccast2mqtt>`_: gateway to Yamaha MusicCast enabled devices, via their HTTP API.
+Check in the related repos some fully developped interfaces.  Their names usually follows the
+pattern **<interface_name>2mqtt**, for example **musiccast2mqtt**.
+
+This library comes with 2 interfaces:
+
+- **dummy**: the template; check the :mod:`mqttgateway.dummy` documentation.
+- **entry**: example used for the :doc:`tutorial <tutorial>`.
 
 ..
   - **C-Bus**: gateway to the Clipsal-Schneider C-Bus system, via its PCI Serial Interface.
