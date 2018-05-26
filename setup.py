@@ -33,6 +33,5 @@ setup(
     packages=find_packages(),
     install_requires=['paho-mqtt >= 1.3.1'],
     package_data={'': ['*.conf', '*.json']},
-    entry_points={'console_scripts': ['dummy2mqtt = mqttgateway.dummy.dummy2mqtt:main']}
-    #              'console_scripts': ['entry2mqtt = mqttgateway.entry.entry2mqtt:__main__']}
+    entry_points={'console_scripts': ['dummy2mqtt = mqttgateway.dummy.dummy_start:main']}
 )
