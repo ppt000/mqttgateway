@@ -8,8 +8,6 @@
    :scale: 30%
    :align: right
 
-.. include:: banner.txt
-
 .. include:: readme.rst
 
 Contents
