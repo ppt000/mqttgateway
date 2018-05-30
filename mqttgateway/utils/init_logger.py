@@ -1,5 +1,7 @@
 '''
 Function to initialise a logger with pre-defined handlers.
+
+.. reviewed 30 May 2018
 '''
 
 import sys
@@ -16,33 +18,31 @@ _LEVELNAMES = {
     }
 
 def initlogger(logger, logfiledata, emaildata):
-    '''
+    ''' Initialise the logging environment for the application.
+
     The logger passed as parameter should be sent by the 'root' module if
     hierarchical logging is the objective. The logger is then initialised with
     the following handlers:
 
-    * the standard 'Stream' handler will always log level WARN and above;
-    * a rotating file handler, with fixed parameters (max 50kB, 3 rollover
+    - the standard 'Stream' handler will always log level WARN and above;
+    - a rotating file handler, with fixed parameters (max 50kB, 3 rollover
       files); the level for this handler is DEBUG if the parameter 'log_debug' is
       True, INFO otherwise; the file name for this log is given by the
       log_filepath parameter which is used as is; an error message is logged in
       the standard handler if there was a problem creating the file;
-    * an email handler with the level set to CRITICAL;
+    - an email handler with the level set to CRITICAL;
 
     Args:
         logger: the actual logger object to be initialised;
-        logfiledata (tuple): [0] = logfilepath (string): the log file path,
-                                   if None, file logging is disabled;
-                             [1] = log_debug (boolean): a flag to indicate
-                                   if DEBUG logging is required, or only INFO;
-                             [2] = consolelevel (string): the level of log to be sent
-                                   to the console (stdout), or NONE.
-        emaildata (tuple): [0] = host (string),
-                           [1] = port (int),
-                           [2] = address (string),
-                                 if either of those 3 values are None or empty,
-                                 no email logging is enabled;
-                           [3] = app_name (string).
+        logfiledata (tuple): 3 elements tuple made of
+          [0] = logfilepath (string): the log file path, if None, file logging is disabled;
+          [1] = log_debug (boolean): a flag to indicate if DEBUG logging is required, or only INFO;
+          [2] = consolelevel (string): the level of log to be sent to the console (stdout), or NONE.
+        emaildata (tuple): 4 elements tuple; no email logging if either of first 3 values invalid
+          [0] = host (string),
+          [1] = port (int),
+          [2] = address (string), ,is enabled;
+          [3] = app_name (string).
 
     Returns:
         Nothing
@@ -63,7 +63,7 @@ def initlogger(logger, logfiledata, emaildata):
     #===========================================================================
     # create the stream handler. It should always work.
     formatter = logging.Formatter('%(name)-20s %(levelname)-8s: %(message)s')
-    stream_handler = logging.StreamHandler()
+    stream_handler = logging.StreamHandler(sys.stderr)
     stream_handler.setLevel(logging.DEBUG) # set level temporarily to log all in this function
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
@@ -92,8 +92,6 @@ def initlogger(logger, logfiledata, emaildata):
             file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)
     # create the email handler.
-    #TODO: if anything is wrong here the handler will trigger an error only when
-    #      an email will be sent. Check how to check this in advance.
     email_host = emaildata [:2]
     email_address = emaildata[2]
     app_name = emaildata[3]
@@ -106,7 +104,7 @@ def initlogger(logger, logfiledata, emaildata):
         logger.addHandler(email_handler)
 
     stream_handler.setLevel(logging.WARN) # restore the level of the default handler
-    # TODO: set the level of the logger to the minimum level needed?
-    
+    # TODO: set the level of the logger to the minimum level needed
+
 if __name__ == '__main__':
     pass
