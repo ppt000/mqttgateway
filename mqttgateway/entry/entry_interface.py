@@ -1,10 +1,6 @@
-'''
-The **entry** interface class definition. Use it as a template.
+''' The **entry** interface class definition. Use it as a template.
 
-This module defines the class :class:`entryInterface` that will be instantiated by the
-main gateway module.
-Any other code needed for the interface can be placed here or in other
-modules, as long as the necessary imports are included of course.
+.. reviewed 30 May 2018
 '''
 
 import serial
@@ -14,46 +10,7 @@ import mqttgateway.utils.app_properties as app
 _logger = app.Properties.get_logger(__name__)
 
 class entryInterface(object):
-    '''
-    Doesn't do anything but provides a template.
-
-    The minimum requirement for the interface class is to define 2 public
-    methods:
-
-    - the constructor ``__init__`` which takes 4 arguments,
-    - the ``loop`` method.
-
-    Args:
-        params (dictionary of strings): contains all the options from the configuration file
-            This dictionary is initialised by the ``[INTERFACE]`` section in
-            the configuration file.  All the options in that section generate an
-            entry in the dictionary. Use this to pass parameters from the configuration
-            file to the interface, for example the name of a port, or the speed
-            of a serial communication.
-        msgls (pair of lists of :class:`internalMsg` objects): these lists
-            represent the communication *bus* with the core of the
-            application. The first list should contain the incoming messages to
-            process by this interface, and the second list can be used to
-            send messages from this interface to the core application (and
-            subsequently to the MQTT network).  The elements of these lists
-            should be instantiations of the :class:`internalMsg` class.  Use the
-            method ``pop(0)`` to read the lists on a FIFO basis and
-            the method ``append(msg)`` to fill the lists.
-            The constructor should assign these lists to a local attribute
-            that the other methods of this class can use when needed.
-            It is strongly advised to *empty* the incoming list at the beginning of
-            the process.  The gateway will empty all messages of the outgoing
-            list and attempt to send them to the MQTT system.
-            The main reason to keep 2 lists instead of one is to simplify
-            sending statuses while processing incoming commands one by one.
-        path (string): the full absolute path of the launcher script
-            This path can be used to extract the name of the application
-            or the directory where it is located.  It can be useful to
-            the ``logging`` library to allow proper hierarchical logging
-            or to other functions that need to find data files relative to
-            the launcher script location.
-
-    '''
+    ''' The interface for the entry system.'''
 
     def __init__(self, params, msglist_in, msglist_out):
         # optional welcome message
