@@ -1,10 +1,9 @@
-'''
-The **dummy** interface class definition. Use it as a template.
+''' The **dummy** interface class definition. Use it as a template.
+
+.. reviewed 30 May 2018
 
 This module defines the class :class:`dummyInterface` that will be instantiated by the
-main gateway module.
-Any other code needed for the interface can be placed here or in other
-modules, as long as the necessary imports are included of course.
+main module in the ``gateway`` package.
 '''
 
 # only import this module for the example code in loop()
@@ -17,13 +16,12 @@ _logger = app.Properties.get_logger(__name__)
 
 
 class dummyInterface(object):
-    '''
-    Doesn't do anything but provides a template.
+    ''' Doesn't do anything but provides a template.
 
     The minimum requirement for the interface class is to define 2 public
     methods:
 
-    - the constructor ``__init__`` which takes 4 arguments,
+    - the constructor ``__init__``,
     - the ``loop`` method.
 
     Args:
@@ -33,7 +31,8 @@ class dummyInterface(object):
             entry in the dictionary. Use this to pass parameters from the configuration
             file to the interface, for example the name of a port, or the speed
             of a serial communication.
-
+        msglist_in (:class:MsgList): list of incoming messages (internal representation)
+        msglist_out (:class:MsgList): list of outgoing messages (internal representation)
     '''
 
     def __init__(self, params, msglist_in, msglist_out):
