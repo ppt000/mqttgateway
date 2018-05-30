@@ -1,30 +1,29 @@
-'''
-This module represents the bridge between the internal
-representation of messages and the MQTT representation.
+''' This module is the bridge between the internal and the MQTT representation of messages.
 
-It defines 2 classes:
-
-- :class:`internalMsg` is the internal representation of a message
-- :class:`msgMap` is the conversion engine between the internal
-  representation and the MQTT one.
+.. Reviewed 30May2018
 
 As a reminder, we define the MQTT syntax as follows:
 
 - topic: ``root/function/gateway/location/device/sender/type-{C or S}``
-- payload: action or status, in plain text or in query string,
-  e.g. ``key1=value1&key2=value2&...``
+- payload: action or status, in plain text or in a json string e.g. ``{key1:value1,key2:value2,..}``
+
 '''
 
 from collections import namedtuple
-import paho.mqtt.client as mqtt
 import Queue
 import json
+import paho.mqtt.client as mqtt
 import mqttgateway.utils.app_properties as app
 _logger = app.Properties.get_logger(__name__)
 
 class internalMsg(object):
     '''
     Defines all the characteristics of an internal message.
+
+    Behaviour of ``None``: even if it could be interesting to differentiate between a
+    characteristic set to ``None`` and one set to an empty string (an empty string could still
+    be mapped for example), currently they are considered the same, i.e. a non existent value.
+    Therefore ``None`` values are converted always to empty strings.
 
     Args:
         iscmd (bool): Indicates if the message is a command (True) or a status (False), optional
@@ -41,17 +40,23 @@ class internalMsg(object):
     def __init__(self, iscmd=False, function=None, gateway=None,
                  location=None, device=None, sender=None, action=None, arguments=None):
         self.iscmd = iscmd
-        self.function = function
-        self.gateway = gateway
-        self.location = location
-        self.device = device
-        self.sender = sender
-        self.action = action
+        if function is None: self.function = ''
+        else: self.function = function
+        if gateway is None: self.gateway = ''
+        else: self.gateway = gateway
+        if location is None: self.location = ''
+        else: self.location = location
+        if device is None: self.device = ''
+        else: self.device = device
+        if sender is None: self.sender = ''
+        else: self.sender = sender
+        if action is None: self.action = ''
+        else: self.action = action
         if arguments is None: self.arguments = {}
         else: self.arguments = arguments
 
     def copy(self):
-        ''' docstring '''
+        ''' Creates a copy of the message.'''
         return internalMsg(iscmd=self.iscmd,
                            function=self.function,
                            gateway=self.gateway,
@@ -62,23 +67,26 @@ class internalMsg(object):
                            arguments=self.arguments.copy())
 
     def str(self):
-        '''Helper function to stringify the class attributes.
-        '''
-        return ''.join(('cmd=', str(self.iscmd),
-                        ';function=', str(self.function),
-                        ';gateway=', str(self.gateway),
-                        ';location=', str(self.location),
-                        ';device=', str(self.device),
-                        ';sender=', str(self.sender),
-                        ';action=', str(self.action),
-                        ';arguments', str(self.arguments)
+        ''' Stringifies a class instance.'''
+        return ''.join(('type= ', 'C' if self.iscmd else 'S',
+                        '- function= ', str(self.function),
+                        '- gateway= ', str(self.gateway),
+                        '- location= ', str(self.location),
+                        '- device= ', str(self.device),
+                        '- sender= ', str(self.sender),
+                        '- action= ', str(self.action),
+                        '- arguments= ', str(self.arguments)
                        ))
 
     def reply(self, response, reason):
         ''' Formats the message to be sent as a reply to an existing command
 
-        This method is supposed to be used with an existing message that has been received
-        by the interface
+        This method is supposed to be used with an existing message that has been received.
+        Using this method for all replies guarantees a consistent syntax for replies.
+
+        Args:
+            response (string): code or abbreviation for response, e.g. ``OK```or ``ERROR``
+            reason (string): longer description of the response
         '''
         self.iscmd = False
         self.arguments['response'] = response
@@ -86,23 +94,30 @@ class internalMsg(object):
         return self
 
 class MsgList(Queue.Queue, object):
-    ''' docstring'''
+    ''' Implementation of a Queue list just in case its needed.
+
+    The methods are called ``push`` and ``pull`` in order to differentiate them from the
+    *usual* names (put, get, append, pop, ...).
+    TODO: implement maxsize and timeout.
+    '''
+
     def __init__(self):
-        super(MsgList, self).__init__(maxsize=0) # FEATURE: implement maxsize
+        super(MsgList, self).__init__(maxsize=0)
 
     def push(self, item):
         ''' Equivalent to self._list.append(item)'''
-        super(MsgList, self).put(item, block=True, timeout=None) # FEATURE: implement timeout
+        super(MsgList, self).put(item, block=True, timeout=None)
 
     def pull(self):
         ''' Equivalent to self._list.pop(0)'''
         try: item = super(MsgList, self).get(block=False)
         except Queue.Empty: return None
-        super(MsgList, self).task_done() # CHECK: is it ok to do it straight away?
+        super(MsgList, self).task_done()
         return item
 
-mappedFields = namedtuple('mappedFields', ('function', 'gateway', 'location', 'device', 'sender',
+mappedTokens = namedtuple('mappedTokens', ('function', 'gateway', 'location', 'device', 'sender',
                                            'action', 'argkey', 'argvalue'))
+''' Tokens representing a message that can be mapped.'''
 
 NO_MAP = {
     'root': '',
@@ -116,24 +131,17 @@ NO_MAP = {
     'argkey': {'maptype': 'none'},
     'argvalue': {'maptype': 'none'}
 }
+'''Default map, with no mapping at all.'''
 
 class msgMap(object):
-    '''
-    Contains the mapping data and the conversion methods.
+    ''' Contains the mapping data and the conversion methods.
 
-    Initialises the 5 maps from the argument ``mapdata``, which is an object that must be readable
-    line by line with a simple iterator. The syntax for ``mapdata`` is that each line has to start
-    with one of 6 possible labels (``topic``, ``function``, ``gateway``, ``location``, ``device``,
-    ``action``) followed by ``:`` and then the actual data. If the label is ``topic`` then the data
-    should be a valid MQTT topic string, otherwise the data should be a pair of keywords separated
-    by a ``,``, the first being the MQTT representation of the element and the second being its
-    internal equivalent.
-
-    To access the maps use: mqtt_token = maps.*field*.m2i(internal_token)
-    Example: mqtt_token = maps.gateway.m2i(internal_token)
+    The mapping data is read from a JSON style dictionary.
+    To access the maps use: mqtt_token = maps.*field*.i2m(internal_token)
+    Example: mqtt_token = maps.gateway.i2m(internal_token)
 
     Args:
-        jsondata (dictionary): contains the map data in the agreed format;
+        jsondict (dictionary): contains the map data in the agreed format;
                                if None, the NO_MAP structure is used.
 
     '''
@@ -145,6 +153,10 @@ class msgMap(object):
         token, and contains the type of mapping, the mapping dictionary if
         available, and the methods to convert the keywords back and forth between
         MQTT and internal representation.
+
+        Args:
+            maptype (string): type of map, should be either 'strict'. 'loose' or 'none'
+            mapdict (dictionary): dictionary representing the mapping
         '''
         def __init__(self, maptype, mapdict=None):
             if not mapdict or maptype == 'none':
@@ -166,44 +178,76 @@ class msgMap(object):
                     self.maptype = 'none'
 
         def m2i(self, mqtt_token):
-            ''' docstring '''
+            ''' Generic method converting an MQTT token into an internal characteristic.'''
             return self.mapfunc(mqtt_token, self.m2i_dict)
 
         def i2m(self, internal_token):
-            ''' docstring '''
+            ''' Generic method converting an internal characteristic into an MQTT token.'''
             mqtt_token = self.mapfunc(internal_token, self.i2m_dict)
-            if mqtt_token is None: return ''
             return mqtt_token
 
         @staticmethod
         def _mapnone(token, dico):
+            ''' Returns the argument unchanged.
+
+            Args:
+                token (string): the token to convert
+                dico (dictionary): the mapping dictionary to use for the conversion, if needed
+
+            Returns:
+                string: converted token
+            '''
+            if token is None: return ''
             return token
 
         @staticmethod
         def _maploose(token, dico):
-            if token is None: return None
+            ''' Returns the argument converted if in dictionary, unchanged otherwise.
+
+            If ``token`` is None, it is always converted in an empty string.
+
+            Args:
+                token (string): the token to convert
+                dico (dictionary): the mapping dictionary to use for the conversion, if needed
+
+            Returns:
+                string: converted token
+            '''
+            if token is None: return ''
             try: return dico[token]
             except KeyError: return token
 
         @staticmethod
         def _mapstrict(token, dico):
-            if token is None: return None
-            try: return dico[token]
-            except KeyError: raise ValueError(''.join(('Token ', token, ' not found.')))
+            ''' Returns the argument converted if in dictionary, raises exception otherwise.
 
-    def __init__(self, jsondict):
+            If ``token`` is None, it is always converted in an empty string.
+            An empty string is kept as an empty string, even if not in the dictionary.
+
+            Args:
+                token (string): the token to convert
+                dico (dictionary): the mapping dictionary to use for the conversion, if needed
+
+            Returns:
+                string: converted token
+            '''
+            if token is None or token == '': return ''
+            try: return dico[token]
+            except KeyError: raise ValueError(''.join(('Token <', token, '> not found.')))
+
+    def __init__(self, jsondict=None):
         if not jsondict: jsondict = NO_MAP
         self._sender = app.Properties.name
         try: self.root = jsondict['root']
-        except KeyError: raise ValueError('JSON file has no object <root>.')
+        except KeyError: raise ValueError('JSON dictionary has no key <root>.')
         try: self.topics = jsondict['topics']
-        except KeyError: raise ValueError('JSON file has no object <topics>.')
+        except KeyError: raise ValueError('JSON dictionary has no key <topics>.')
 
         maplist = []
-        for field in mappedFields._fields:
+        for field in mappedTokens._fields:
             try: field_data = jsondict[field]
             except KeyError:
-                raise ValueError(''.join(('JSON file has no object <', field, '>.')))
+                raise ValueError(''.join(('JSON dictionary has no key <', field, '>.')))
             try: field_maptype = field_data['maptype']
             except KeyError:
                 raise ValueError(''.join(('<', field, '> object has no child <maptype>.')))
@@ -214,10 +258,10 @@ class msgMap(object):
                 except KeyError:
                     raise ValueError(''.join(('<', field, '> object has no child <map>.')))
             maplist.append(self.tokenMap(field_maptype, field_map))
-        self.maps = mappedFields._make(maplist)
+        self.maps = mappedTokens._make(maplist)
 
     def sender(self):
-        ''' docstring '''
+        ''' Getter for the ``_sender`` attribute.'''
         return self._sender
 
     def mqtt2internal(self, mqtt_msg):
@@ -232,7 +276,6 @@ class msgMap(object):
 
         Raises:
             ValueError: in case of bad MQTT syntax or unrecognised map elements
-
         '''
 
         # unpack the topic
@@ -240,39 +283,21 @@ class msgMap(object):
         if len(tokens) != 7:
             raise ValueError(''.join(('Topic <', mqtt_msg.topic,
                                       '> has not the right number of tokens.')))
-        # unpack the arguments
+
+        # unpack the arguments if any
         # one of them should be 'action' and goes into mqtt_action
         # the other arguments form a dictionary: m_args
-        
         if mqtt_msg.payload[0] == '{': # it is a JSON structure
             try: m_args = json.loads(mqtt_msg.payload)
             except (ValueError, TypeError) as err:
                 raise ValueError(''.join(('Bad format for payload <', mqtt_msg.payload, '>'\
-                                          ' with error:\n\t', repr(err))))
+                                          ' with error:\n\t', str(err))))
             try: mqtt_action = m_args.pop('action')
             except KeyError:
                 raise ValueError(''.join(('No action found in payload <', mqtt_msg.payload, '>')))
         else: # this is a straightforward action
             mqtt_action = mqtt_msg.payload
             m_args = {}
-
-        
-        #== OLD VERSION WITH QUERY STRINGS =====================================================
-        # if '&' in mqtt_msg.payload: # there is more than one argument in this payload
-        #     mqtt_action = None # just in case there is no 'action' in the list of arguments
-        #     # the payload syntax is a query string 'key1=value1&key2=value2&...'
-        #     for token in mqtt_msg.payload.split('&'):
-        #         argument = token.split('=')
-        #         if len(argument) != 2:
-        #             raise ValueError(''.join(('Bad format for payload <', mqtt_msg.payload, '>')))
-        #         if argument[0] == 'action':
-        #             mqtt_action = argument[1]
-        #         else:
-        #             m_args[argument[0]] = argument[1]
-        #     if not mqtt_action: raise ValueError(''.join(('No action found in payload <', mqtt_msg.payload, '>')))
-        # else: # this is a straightforward action
-        #     mqtt_action = mqtt_msg.payload
-        #===========================================================================================
 
         function = self.maps.function.m2i(tokens[1])
         gateway = self.maps.gateway.m2i(tokens[2])
@@ -303,17 +328,16 @@ class msgMap(object):
         Converts an internal message into a MQTT one.
 
         Args:
-            internal_msg (an internalMsg object): the message to convert
+            internal_msg (:class:`internalMsg`): the message to convert
 
         Returns:
             a MQTTMessage object: a full MQTT message where topic syntax is
             ``root/function/gateway/location/device/sender/{C or S}`` and
-            payload syntax is either a plain action or a query string.
+            payload syntax is either a plain action or a JSON string.
 
         Raises:
             ValueError: in case a token conversion fails
         '''
-
 
         mqtt_function = self.maps.function.i2m(internal_msg.function)
         mqtt_gateway = self.maps.gateway.i2m(internal_msg.gateway)
@@ -323,31 +347,19 @@ class msgMap(object):
         if not mqtt_sender: mqtt_sender = self._sender
         mqtt_action = self.maps.action.i2m(internal_msg.action)
         mqtt_args = {}
-        if internal_msg.arguments is not None:
-            for key, value in internal_msg.arguments.iteritems():
-                mqtt_args[self.maps.argkey.i2m(key)] = self.maps.argvalue.i2m(value)
+        for key, value in internal_msg.arguments.iteritems():
+            mqtt_args[self.maps.argkey.i2m(key)] = self.maps.argvalue.i2m(value)
         # Generate topic
         topic = '/'.join((self.root, mqtt_function, mqtt_gateway, mqtt_location,
                           mqtt_device, mqtt_sender, 'C' if internal_msg.iscmd else 'S'))
-
         # Generate payload
-        #========================================================================================
-        
-        
         if not mqtt_args: # no arguments, just publish the action text on its own
             payload = mqtt_action
         else: # there are arguments, publish them
             mqtt_args['action'] = mqtt_action
             try: payload = json.dumps(mqtt_args)
             except (ValueError, TypeError) as err:
-                raise ValueError(''.join(('Error serialising arguments:\n\t', repr(err))))
-
-            #=== OLD VERSION AS QUERY STRINGS ======================================================
-            # stringlist = ['action=', mqtt_action]
-            # for arg in internal_msg.arguments:
-            #     stringlist.extend(['&', arg, '=', internal_msg.arguments[arg]])
-            # payload = ''.join(stringlist)
-            #=======================================================================================
+                raise ValueError(''.join(('Error serialising arguments:\n\t', str(err))))
 
         mqtt_msg = mqtt.MQTTMessage()
         mqtt_msg.topic = topic
