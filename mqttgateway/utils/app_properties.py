@@ -1,5 +1,12 @@
-'''
-docstring
+''' Application wide properties.
+
+.. reviewed 30 May 2018
+
+This module is an alternative to a singleton.
+It keeps some application variables in the module namespace making them effectively global.
+At startup, the module should be imported straight away so that it creates an AppProperties object
+called Properties that is global, and initialised with mostly empty values, except the ``init``
+attribute which is essentially the constructor.
 '''
 
 from collections import namedtuple
@@ -18,10 +25,17 @@ AppProperties = namedtuple('AppProperties', ('name',
                                              'get_logger'))
 
 def _dummy(*args, **kwargs):
+    ''' Do nothing.'''
     pass
 
 def _get_logger(fullmodulename):
-    ''' docstring '''
+    ''' Returns the logger for the module in argument.
+
+    Resolves the case where the module name is ``__main__``.
+
+    Args:
+        fullmodulename (string): normally it is the __name__ of the calling module.
+    '''
     if fullmodulename == '__main__' or fullmodulename == _THIS.Properties.name:
         logname = _THIS.Properties.name
     else:
@@ -30,54 +44,26 @@ def _get_logger(fullmodulename):
         else: logname = '.'.join((_THIS.Properties.name, modulename))
     return logging.getLogger(logname)
 
-#===================================================================================================
-# def _get_path_old(extension, path_given=None):
-#     '''
-#     Generates the full absolute path of a file.
-# 
-#     **NOTE**: this docstring is obsolete...
-# 
-#     This function builds an absolute path to a file based on 3 'default' arguments
-#     (the basename of the file, the extension of the file, and an absolute path) and
-#     an extra argument that represents a valid path.
-#     Depending on what represents this path (a directory, a file, an absolute or a
-#     relative reference) the function will generate a full absolute path, relying on the
-#     'default' parameters if and when necessary.
-#     The generation of the full path follows those rules:
-# 
-#         - the default name is made of the default basename and the default extension;
-#         - if the path given is empty, then the full path is the default absolute path
-#           with the default filename;
-#         - if the path given contains a filename at the end, this is the filename to be used;
-#         - if the path given contains an absolute path at the beginning, that is the
-#           absolute path that will be used;
-#         - if the path given contains only a relative path at the beginning, then
-#           the default absolute path will be prepended to the path given.
-# 
-#     Args:
-#         basename (string): basename without extension, usually the application name
-#         absdirpath (string): the absolute path of the current application
-#         ext (string): the extension of the file, in the form '.xxx'. i.e. with the dot
-#         pathgiven (string): the path given as alternative to the default
-# 
-#     Returns:
-#         string: a full absolute path
-#     '''
-#     dfltname = ''.join((_THIS.Properties.name, extension))
-#     if path_given == '':
-#         filepath = os.path.join(_THIS.Properties.path, dfltname)
-#     else:
-#         dirname, filename = os.path.split(path_given.strip())
-#         if dirname != '': dirname = os.path.normpath(dirname)
-#         if filename == '': filename = dfltname
-#         if dirname == '': dirname = _THIS.Properties.path
-#         elif not os.path.isabs(dirname): dirname = os.path.join(_THIS.Properties.path, dirname)
-#         filepath = os.path.join(dirname, filename)
-#     return os.path.normpath(filepath)
-#===================================================================================================
-
 def _get_path(extension, path_given, app_name=None, app_dirs=None):
-    ''' docstring '''
+    ''' Returns the absolute path of a file following the application rules.
+
+    Rules:
+
+   - the default name is app_name + extension;
+   - the default directories are provided by the app_dirs argument;
+   - file paths can be directory only (ends with a '/') and are appended with the default name;
+   - file paths can be absolute or relative; absolute start with a '/' and
+     relative are prepended with the default directory;
+   - file paths can be file only (no '/' whatsoever) and are prepended with the default directory;
+   - use forward slashes '/' in any case, even for Windows systems, it should work;
+   - however for Windows systems, use of the drive letter might be an issue and has not been tested.
+
+    Args:
+        extension (string): the default extension of the file
+        path_given (string): any type pf path; see rules
+        app_name (string): the application name for the defaults
+        app_dirs (list of strings): the default directories where to look for the files
+    '''
     if app_name is None: app_name = _THIS.Properties.name
     if app_dirs is None: app_dirs = _THIS.Properties.directories
     if extension[0] != '.': extension = '.' + extension # just in case
@@ -94,8 +80,16 @@ def _get_path(extension, path_given, app_name=None, app_dirs=None):
             if os.path.exists(pth): return pth
         return paths[0] # even if it will fail, return the first path in the list
 
-def _init_properties(app_path, app_name):
-    ''' docstring '''
+def _init_properties(app_path=None, app_name=None):
+    ''' Initialisation of the properties object.
+
+    This is supposed to work like a constructor of the *class-like* object ``AppProperties``.
+    Once called, it replaces the ``Properties`` instance with another instance initialised with
+    the right values.
+    The ``Properties`` object is a namedtuple to emphasize the fact that these are variables that
+    should not change.  As usual, you can still mess with those but hopefully the barrier to mess
+    is higher.
+     '''
     if not app_name:
         app_name = os.path.splitext(os.path.basename(app_path))[0] # first part of the filename, without extension
     script_dir = os.path.realpath(os.path.dirname(app_path)) # full path of directory of launching script
