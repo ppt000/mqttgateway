@@ -1,14 +1,23 @@
-'''
-The default configuration settings in a single string constant.
+''' The default configuration settings in a single string constant.
 
-Given how the configuration loader works, only the sections and options
-declared already here will be considered in any external configuration file.
-If an external configuration file is read and contains sections and options not
-included in here, they will be ignored, except for the ``[INTERFACE]`` section.
-The section ``[INTERFACE]`` is reserved to the configuration parameters that might be
-needed by the interface being implemented.
+.. reviewed 29May2018
+
+.. any changes in CONFIG should be reflected in the dummy2mqtt.conf file.
 
 Use this declaration as a template configuration file.
+
+The configuration loader :mod:`mqttgateway.utils.load_config` only
+considers sections and options that are already present in this string
+and disregard anything else.  If a section or option is found in a configuration
+file but is not listed here, it will not be taken into account.  Only
+sections and options already here are taken into account when found in a configuration
+file, and then they overwrite the default values defined here.
+
+The only exception is the ``[INTERFACE]`` section which is reserved to the configuration
+parameters needed by the interface being implemented.  The section itself is defined here
+but no options are present as those are defined by the developper, and those are the only
+options that the loader will take into account.
+
 '''
 
 CONFIG = '''
@@ -58,8 +67,7 @@ topics: home/dummyfunction/#, home/+/dummy/#
 [LOG]
 # Log file: all WARN level logs and above are sent to stderr or equivalent.
 #   To log levels below that a file location is needed.
-#   Leave this option blank to not enable a log file - and therefore logs
-#   of level below WARN will be lost.
+#   Leave this option blank to not enable a log file.
 #   Use a dot <.> to use the default name and path.
 #   The default name used is <*application_name*.log>.
 #   Make sure the process will have the rights to write in this file.
@@ -76,7 +84,7 @@ consolelevel: NONE
 
 # Email credentials; leave empty if not required.
 #   All CRITICAL level logs are sent to this email, if defined.
-#   For now there is no authentication, it is only here for 'internal' emails.
+#   For now there is no authentication.
 emailhost:
 # for example: emailhost: 127.0.0.1
 emailport:
@@ -88,15 +96,16 @@ emailaddress:
 # Note on file paths and names:
 #   - the default name is 'application_name' +
 #                          default extension (.log, .map, ... etc);
-#   - the default path is the 'application' directory, which 'should' be the
-#     location of the launching script;
-#   - file paths can be empty in which case the default name and path will be
-#     used;
+#   - the default directories are (1) the configuration file location, (2) the
+#     current working directory, (3) the application directory, which
+#     'should' be the location of the launching script;
+#   - empty file paths have different meaning depending where they are used;
+#     best to avoid;
 #   - file paths can be directory only (ends with a '/') and are appended with
 #     the default name;
 #   - file paths can be absolute or relative; absolute start with a '/' and
 #     relative are prepended with the default directory;
-#   - file 'paths' can be file only (no '/' whatsoever) and are prepended with
+#   - file paths can be file only (no '/' whatsoever) and are prepended with
 #     the default directory;
 #   - use forward slashes '/' in any case, even for Windows systems, it should
 #     work;
