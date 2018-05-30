@@ -63,7 +63,7 @@ There are four sections:
    loading process.  It is not visible in the template files but it is created at runtime.
 
 For more details about the ``.conf`` file, its defaults and the command line arguments,
-go to `Configuration <configuration>`_.
+go to :doc:`Configuration <configuration>`.
 
 Launch
 ======
@@ -121,10 +121,10 @@ once again, the **dummy** interface really doesn't do anything, and it is disabl
 Note that the map file also contains the *root* of the MQTT messages and the topics that the
 interface should subscribe to.
 
-For more details on the mapping data, go to `Concepts <concepts>`_.
+For more details on the mapping data, go to :doc:`Concepts <concepts>`.
 
 Deploying a gateway
 ===================
 
 The objective of developing a gateway is to ultimately deploy it in a production environment.
-To install a gateway as a service on a linux machine, go to `Configuration <configuration>`_
+To install a gateway as a service on a linux machine, go to :doc:`Configuration <configuration>`.
