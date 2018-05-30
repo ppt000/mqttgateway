@@ -1,9 +1,10 @@
-'''
-Launcher script for the **dummy** gateway.
+''' Launcher script for the **dummy** interface.
+
+.. reviewed 30 May 2018
 
 Use this as a template.
 If the name conventions have been respected, just change all occurrences of
-``dummy`` into the name of your gateway.
+``dummy`` into the name of your interface.
 '''
 
 import os.path
@@ -20,6 +21,7 @@ import mqttgateway.gateway.start_gateway as start_g
 import mqttgateway.dummy.dummy_interface as dummy_i
 
 def main():
+    ''' The entry point for the application '''
     # launch the gateway *** change to your class here ***
     start_g.startgateway(dummy_i.dummyInterface)
 
