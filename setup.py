@@ -16,7 +16,7 @@ with open(path.join(here, 'docs/source/readme.rst'), encoding='utf-8') as f:
 setup(
     name='mqttgateway',
     version=mqttgateway.version.version,
-    description='Framework for MQTT Gateways',
+    description='Framework for MQTT Gateways.',
     long_description=long_description,
     #long_description_content_type='text/x-rst', # apparently it is optional if rst
     url='http://mqttgateway.readthedocs.io/en/latest/',
