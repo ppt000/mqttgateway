@@ -4,10 +4,10 @@ mqttgateway.entry package
 Submodules
 ----------
 
-mqttgateway.entry.entry2mqtt module
------------------------------------
+mqttgateway.entry.entry_start module
+------------------------------------
 
-.. automodule:: mqttgateway.entry.entry2mqtt
+.. automodule:: mqttgateway.entry.entry_start
     :members:
     :undoc-members:
     :show-inheritance:
