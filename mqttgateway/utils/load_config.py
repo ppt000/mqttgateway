@@ -1,5 +1,7 @@
-'''
-Function to facilitate the loading of configuration parameters.
+''' Function to facilitate the loading of configuration parameters.
+
+.. reviewed 30 May 2018
+
 Based on ConfigParser.
 '''
 
@@ -16,9 +18,8 @@ def loadconfig(cfg_dflt_string, cfg_filepath):
     ``cfg_dflt_string``. This string is expected to have all the necessary
     sections and options that the application will need, with their default
     values.  All options need to be listed there, even the ones that HAVE to be
-    updated and have no default value.  This default configuration will be
-    usually declared in the caller module as a constant string, and will be used
-    as a template for the actual configuration file.
+    updated and have no default value.  This default configuration is declared
+    as a constant string, and is also the template for the actual configuration file.
 
     The function 'loads' this default configuration, then checks if the
     configuration file is available, and if found it grabs only the values from
@@ -35,15 +36,14 @@ def loadconfig(cfg_dflt_string, cfg_filepath):
 
     Finally, the function updates the option 'location' in the
     section [CONFIG] with the full path of the configuration file used, just in
-    case it is needed later.  However it only updates it if it was present in
-    the default configuration string, in the spirit of the above convention.  It
-    also 'logs' the error in the 'error' option of the same section, if any OS
-    exception occurred while opening or reading the configuration file.
+    case it is needed later.  It also 'logs' the error in the 'error' option of the
+    same section, if any OS exception occurred while opening or reading the configuration file.
 
     Args:
         cfg_dflt_string (string): represents the default configuration.
         cfg_filepath (string): the path of the configuration file; it is used 'as is'
-            and if it is relative there is no guarantee of where it will actually point.
+            and if it is relative there is no guarantee of where it will actually point...
+            Better send an absolute path then.
 
     Returns:
         ConfigParser.RawConfigParser object: object loaded with the parameters.
