@@ -1,17 +1,12 @@
 {
 	"root": "home",
 	"topics": ["home/+/dummy/+/+/+/C", "home/audiovideo/+/+/+/+/C"],
-	"function": {"map": {"audiovideo": "AudioVideo", "lighting": "Lighting"}, "maptype": "strict"},
+	"function": {"map": {"audiovideo": "AudioVideo", "lighting": "Lighting", "dummyfunction":"DummyFunction"}, "maptype": "loose"},
 	"gateway": {"map": {"dummy": "Dummy"}, "maptype": "strict"},
 	"location": {
-		"map": {
-			"dining_room": "DiningRm",
-			"office": "Office",
-			"kitchen": "Kitchen"
-		},
-		"maptype": "strict"
-	},
-	"device": {"maptype": "none"},
+		"map": {"dining_room": "DiningRm","office": "Office","kitchen": "Kitchen"},
+		"maptype": "loose"},
+	"device": {"map": {}, "maptype": "loose"},
 	"sender": {"maptype": "none"},
 	"action": {
 		"map": {
