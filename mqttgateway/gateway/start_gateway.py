@@ -4,6 +4,7 @@
 '''
 
 import json
+import traceback
 
 import mqttgateway.gateway.mqtt_client as mqtt
 import mqttgateway.utils.app_properties as app
@@ -14,7 +15,17 @@ from mqttgateway.utils.init_logger import initlogger
 
 from mqttgateway.gateway.configuration import CONFIG
 
+_logger = app.Properties.get_logger(__name__)
+
 def startgateway(gateway_interface):
+    ''' Entry point.'''
+    try:
+        _startgateway(gateway_interface)
+    except:
+        _logger.error(''.join(('Fatal error: ', traceback.format_exc())))
+        raise
+
+def _startgateway(gateway_interface):
     '''
     Initialisation of the application and main loop.
 
@@ -48,19 +59,19 @@ def startgateway(gateway_interface):
     emaildata = (cfg.get('LOG', 'emailhost'), cfg.get('LOG', 'emailport'),
                  cfg.get('LOG', 'emailaddress'), app.Properties.name)
     initlogger(app.Properties.root_logger, logfiledata, emaildata)
-    logger = app.Properties.get_logger(__name__)
+    #logger = app.Properties.get_logger(__name__)
 
     # Log the configuration used ==================================================================
-    logger.info('=== APPLICATION STARTED ===')
-    logger.info('Configuration:')
+    _logger.info('=== APPLICATION STARTED ===')
+    _logger.info('Configuration:')
     for section in cfg.sections():
         for option in cfg.options(section):
-            logger.info(''.join(('   [', section, '].', option, ' : <',
+            _logger.info(''.join(('   [', section, '].', option, ' : <',
                                  str(cfg.get(section, option)), '>.')))
 
     # Exit in case of error processing the configuration file.
     if cfg.has_section('CONFIG') and cfg.has_option('CONFIG', 'error'):
-        logger.critical(''.join(('Error while processing the configuration file:\n\t',
+        _logger.critical(''.join(('Error while processing the configuration file:\n\t',
                                  cfg.get('CONFIG', 'error'))))
         raise SystemExit
 
@@ -83,7 +94,7 @@ def startgateway(gateway_interface):
             with open(mapfilepath, 'r') as mapfile:
                 map_data = json.load(mapfile)
         except (OSError, IOError) as err:
-            logger.critical(''.join(('Error loading map file <', mapfilepath, '>:/n/t', str(err))))
+            _logger.critical(''.join(('Error loading map file <', mapfilepath, '>:/n/t', str(err))))
             raise SystemExit
     else: # use default map - take root and topics from configuration file
         mqtt_map.NO_MAP['root'] = cfg.get('MQTT', 'root')
@@ -91,7 +102,7 @@ def startgateway(gateway_interface):
         map_data = None
     try: messagemap = mqtt_map.msgMap(map_data) # will raise ValueErrors if problems
     except ValueError as err:
-        logger.critical(''.join(('Error processing map file <', mapfilepath, '>:/n/t', str(err))))
+        _logger.critical(''.join(('Error processing map file <', mapfilepath, '>:/n/t', str(err))))
 
     # Initialise the MQTT client and connect ======================================================
     # Define the function that will be called by the on_message MQTT call-back
@@ -103,7 +114,7 @@ def startgateway(gateway_interface):
         '''
         try: internal_msg = messagemap.mqtt2internal(mqtt_msg)
         except ValueError as err:
-            logger.info(str(err))
+            _logger.info(str(err))
             return
         msglist_in.push(internal_msg)
         return
@@ -133,6 +144,6 @@ def startgateway(gateway_interface):
             if internal_msg is None: break
             try: mqtt_msg = messagemap.internal2mqtt(internal_msg)
             except ValueError as err:
-                logger.info(str(err))
+                _logger.info(str(err))
                 continue
             mqttclient.publish(mqtt_msg.topic, mqtt_msg.payload, qos=0, retain=False)
