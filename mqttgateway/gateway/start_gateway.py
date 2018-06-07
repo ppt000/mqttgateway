@@ -96,6 +96,9 @@ def _startgateway(gateway_interface):
         except (OSError, IOError) as err:
             _logger.critical(''.join(('Error loading map file <', mapfilepath, '>:/n/t', str(err))))
             raise SystemExit
+        except ValueError as err:
+            _logger.critical(''.join(('Error reading JSON file <', mapfilepath, '>:/n/t', str(err))))
+            raise SystemExit
     else: # use default map - take root and topics from configuration file
         mqtt_map.NO_MAP['root'] = cfg.get('MQTT', 'root')
         mqtt_map.NO_MAP['topics'] = [topic.strip() for topic in cfg.get('MQTT', 'topics').split(',')]
