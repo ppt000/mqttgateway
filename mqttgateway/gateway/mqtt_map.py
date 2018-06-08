@@ -154,19 +154,23 @@ class msgMap(object):
         available, and the methods to convert the keywords back and forth between
         MQTT and internal representation.
 
+        The mapping dictionary passed as argument has the internal keywords as keys and
+        as value a list of corresponding MQTT keywords.  Only the first of the list will be
+        used for the reverse dictionary, the other MQTT keywords being 'aliases'.
+
         Args:
             maptype (string): type of map, should be either 'strict'. 'loose' or 'none'
             mapdict (dictionary): dictionary representing the mapping
         '''
         def __init__(self, maptype, mapdict=None):
             if not mapdict or maptype == 'none':
-                self.m2i_dict = None
                 self.i2m_dict = None
+                self.m2i_dict = None
                 self.mapfunc = self._mapnone # by default with no maps
                 self.maptype = 'none'
             else:
-                self.m2i_dict = mapdict
-                self.i2m_dict = {v: k for k, v in mapdict.iteritems()} # inverse dictionary
+                self.i2m_dict = {k: v[0] for k, v in mapdict.iteritems()}
+                self.m2i_dict = {w: k for k, v in mapdict.iteritems() for w in v}
                 if maptype == 'loose':
                     self.mapfunc = self._maploose
                     self.maptype = maptype
@@ -371,14 +375,14 @@ class msgMap(object):
 def test():
     ''' docstring '''
     # load a valid map in JSON format
-    jsonfilepath = '../data/cbus_map.json'
+    jsonfilepath = './test_map2.json'
     with open(jsonfilepath, 'r') as json_file:
         json_data = json.load(json_file)
     # instantiate a class
     msgmap = msgMap(json_data)
     # printout some members
     function = msgmap.maps.function.m2i('lighting'); print function
-    gateway = msgmap.maps.gateway.m2i('whatever'); print gateway
+    gateway = msgmap.maps.gateway.m2i('dummy'); print gateway
     location = msgmap.maps.location.m2i('office'); print location
     device = msgmap.maps.device.m2i('kitchen_track'); print device
     sender = msgmap.maps.sender.m2i('me'); print sender
@@ -389,5 +393,21 @@ def test():
         i_args[msgmap.maps.argkey.m2i(key)] = msgmap.maps.argvalue.m2i(value)
     print i_args
 
+def reverse():
+    jsonfilepath = './test_map.json'
+    with open(jsonfilepath, 'r') as json_file:
+        json_data = json.load(json_file)
+    for item in ('function', 'gateway', 'location', 'device', 'sender', 'action', 'argkey', 'argvalue'):
+        if 'map' not in json_data[item]: continue
+        newmap = {}
+        oldmap = json_data[item]['map']
+        for key, value in oldmap.iteritems():
+            newmap[value] = []
+            newmap[value].append(key)
+        json_data[item]['map'] = newmap
+    print json.dumps(json_data)
+    return
+
 if __name__ == '__main__':
     test()
+    #reverse()

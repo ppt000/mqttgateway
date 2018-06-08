@@ -1,57 +1,55 @@
 {
-    "root": "home",
-    "topics": [
-        "home/+/dummy/+/+/+/C",
-        "home/audiovideo/+/+/+/+/C"
-    ],
-    "function": {
-        "map": {
-            "audiovideo": "AudioVideo",
-            "lighting": "Lighting",
-            "dummyfunction": "DummyFunction"
-        },
-        "maptype": "loose"
-    },
-    "gateway": {
-        "map": {
-            "dummy": "Dummy"
-        },
-        "maptype": "strict"
-    },
-    "location": {
-        "map": {
-            "dining_room": "DiningRm",
-            "office": "Office",
-            "kitchen": "Kitchen"
-        },
-        "maptype": "loose"
-    },
-    "device": {
-        "maptype": "none"
-    },
-    "sender": {
-        "maptype": "none"
-    },
-    "action": {
-        "map": {
-            "audio_on": "POWER_ON",
-            "audio_off": "POWER_OFF",
-            "volume_up": "VOL_UP",
-            "volume_down": "VOL_DN",
-            "mute_on": "MUTE_ON",
-            "mute_off": "MUTE_OFF",
-            "mute_toggle": "MUTE_TGL",
-            "source_cd": "SOURCE_CD",
-            "source_tuner": "SOURCE_TUNER",
-            "light_on": "LIGHT_ON",
-            "light_off": "LIGHT_OFF"
-        },
-        "maptype": "strict"
-    },
-    "argkey": {
-        "maptype": "none"
-    },
-    "argvalue": {
-        "maptype": "none"
-    }
+	"function": {
+		"map": {
+			"AudioVideo": ["audiovideo"],
+			"Lighting": ["lighting"],
+			"DummyFunction": ["dummyfunction"]
+		},
+		"maptype": "loose"
+	},
+	"sender": {
+		"maptype": "none"
+	},
+	"topics": ["home/+/dummy/+/+/+/C",
+	"home/audiovideo/+/+/+/+/C"],
+	"action": {
+		"map": {
+			"POWER_ON": ["audio_on"],
+			"VOL_UP": ["volume_up"],
+			"SOURCE_CD": ["source_cd"],
+			"MUTE_TGL": ["mute_toggle"],
+			"POWER_OFF": ["audio_off"],
+			"MUTE_OFF": ["mute_off"],
+			"MUTE_ON": ["mute_on"],
+			"VOL_DN": ["volume_down"],
+			"SOURCE_TUNER": ["source_tuner"],
+			"LIGHT_OFF": ["light_off"],
+			"LIGHT_ON": ["light_on"]
+		},
+		"maptype": "strict"
+	},
+	"location": {
+		"map": {
+			"DiningRm": ["dining_room"],
+			"Office": ["office"],
+			"Kitchen": ["kitchen"]
+		},
+		"maptype": "loose"
+	},
+	"device": {
+		"maptype": "none"
+	},
+	"argvalue": {
+		"maptype": "none"
+	},
+	"root": "home",
+	"gateway": {
+		"map": {
+			"Dummy": ["dummy"]
+		},
+		"maptype": "strict"
+	},
+	"argkey": {
+		"maptype": "none"
+	}
 }

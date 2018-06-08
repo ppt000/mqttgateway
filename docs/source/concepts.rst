@@ -227,15 +227,16 @@ to be specified:
 - ``loose``: the conversion of the keywords go through the provided map,
   but missing keywords do not raise any error but are passed unchanged.
 
-The mapping between MQTT keywords and internal ones has to be a one-to-one relationship
-for each characteristic.
-
-.. note::
-
-    It could be useful to define aliases for keywords, so that more than one MQTT keyword
-    can map to a given internal one.  This could be a future improvement.
-    However there will always need to be a unique MQTT keyword for every internal one that
-    has *priority* in the conversion.
+The mapping between internal keywords and MQTT ones is a one-to-many relationship
+for each characteristic.  For each internal keyword there can be more than one MQTT keyword,
+even if there will have to be one which has *priority* in order to define without ambiguity
+the conversion from internal to MQTT keyword.  In practice, this MQTT keyword will be the
+first one in the list provided in the mapping (see below) and the other keywords of that list
+can be considered *aliases*.  Going back to the example above, for the unique internal location
+keyword ``basement``, we could define a list of MQTT keywords as
+``["lowergroundfloor", "basement"]``, so that ``basement`` in internal code gets converted
+to ``lowergroundfloor`` in MQTT (as it is the new *official* keyword) but ``basement`` in
+MQTT is still accepted as a keyword that gets *converted* to ``basement`` in internal messages.
 
 In practice, the mapping data is provided by a JSON formatted file.  The JSON
 schema ``mqtt_map_schema.json`` is available in the ``gateway`` package.
