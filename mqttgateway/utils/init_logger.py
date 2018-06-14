@@ -1,4 +1,4 @@
-'''
+3'''
 Function to initialise a logger with pre-defined handlers.
 
 .. reviewed 30 May 2018
@@ -19,6 +19,7 @@ _LEVELNAMES = {
 
 def initlogger(logger, logfiledata, emaildata):
     ''' Initialise the logging environment for the application.
+from cgi import logfile
 
     The logger passed as parameter should be sent by the 'root' module if
     hierarchical logging is the objective. The logger is then initialised with
@@ -36,7 +37,7 @@ def initlogger(logger, logfiledata, emaildata):
         logger: the actual logger object to be initialised;
         logfiledata (tuple): 3 elements tuple made of
           [0] = logfilepath (string): the log file path, if None, file logging is disabled;
-          [1] = log_debug (boolean): a flag to indicate if DEBUG logging is required, or only INFO;
+          [1] = filelevel (string): the level of log to be sent to the file, or NONE;
           [2] = consolelevel (string): the level of log to be sent to the console (stdout), or NONE.
         emaildata (tuple): 4 elements tuple; no email logging if either of first 3 values invalid
           [0] = host (string),
@@ -68,9 +69,13 @@ def initlogger(logger, logfiledata, emaildata):
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
     # assign the logfiledata for clarity
-    log_filepath = logfiledata[0]
-    log_debug = logfiledata[1]
-    console_level = logfiledata[2]
+    console_level = logfiledata[0]
+    log_filepath = logfiledata[1]
+    file_level = logfiledata[2]
+    if not logfiledata[3]: file_num = 3
+    else: file_num = logfiledata[3]
+    if not logfiledata[4]: file_size = 50000
+    else: file_size = logfiledata[4]
     # create the console handler, if wanted
     if console_level in _LEVELNAMES:
         formatter = logging.Formatter('%(asctime)s %(name)-20s %(levelname)-8s: %(message)s')
@@ -79,16 +84,17 @@ def initlogger(logger, logfiledata, emaildata):
         cons_handler.setFormatter(formatter)
         logger.addHandler(cons_handler)
     # create the file handler, for all logs.
-    if log_filepath is not None:
+    if log_filepath is not None and file_level in _LEVELNAMES:
         formatter = logging.Formatter('%(asctime)s %(module)-20s %(levelname)-8s: %(message)s')
-        try: file_handler = logging.handlers.RotatingFileHandler(log_filepath, maxBytes=50000, backupCount=3)
+        try: file_handler = logging.handlers.RotatingFileHandler(log_filepath, maxBytes=file_size,
+                                                                 backupCount=file_num)
         except (OSError, IOError) as err: # there was a problem with the file
             logger.error(''.join(('There was an error <', str(err), '> using file <', log_filepath,
                                   '> to handle logs. No file used.')))
         else:
-            logger.info(''.join(('Using <', log_filepath, '> to log the ',
-                                 'DEBUG' if log_debug else 'INFO', ' level.')))
-            file_handler.setLevel(logging.DEBUG if log_debug else logging.INFO)
+            logger.info(''.join(('Using <', log_filepath, '> to log the <',
+                                 str(file_level), '> level.')))
+            file_handler.setLevel(_LEVELNAMES[file_level])
             file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)
     # create the email handler.

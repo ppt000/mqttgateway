@@ -21,16 +21,19 @@ options that the loader will take into account.
 '''
 
 CONFIG = '''
+# -----------------------------------------------------------------------------
 [CONFIG]
 # Reserved section used by the loader to store the location where
 #   the configuration settings are coming from, or to store
 #   the error if there was one.
 
+# -----------------------------------------------------------------------------
 [INTERFACE]
 # Section for whatever options are needed by the gateway interface
 #   being developed. All these options will be written in a
 #   dictionary and passed to the interface.
 
+# -----------------------------------------------------------------------------
 [MQTT]
 # The parameters to connect to the MQTT broker
 host: 127.0.0.1
@@ -64,9 +67,18 @@ root: home
 #   as the topics should then be found in the mapping file.
 topics: home/dummyfunction/#, home/+/dummy/#
 
+# -----------------------------------------------------------------------------
 [LOG]
-# Log file: all WARN level logs and above are sent to stderr or equivalent.
-#   To log levels below that a file location is needed.
+# Logs: all WARN level logs and above are sent to stderr or equivalent.
+#   3 more log outputs can be set up: console, rotating files and email.
+# Log levels: indicate what log levels are required for each log output.
+#   Levels are indicated with the following strings (from the logging module):
+#   CRITICAL, ERROR, WARN or WARNING, INFO and DEBUG; use NONE if unused.
+
+# Console level: these are the logs directed to stdout.  Usually only used for testing.
+consolelevel: NONE
+
+# Log file: file location if logs to file is required.
 #   Leave this option blank to not enable a log file.
 #   Use a dot <.> to use the default name and path.
 #   The default name used is <*application_name*.log>.
@@ -74,13 +86,16 @@ topics: home/dummyfunction/#, home/+/dummy/#
 #   See below for other instructions on file names and paths.
 logfilename:
 
-# Turn debug 'on' if logging of all DEBUG level messages is required, otherwise its INFO
-debug: off
+# File level: level for logs directed to the file named by the <logfilename> option.
+#   If that option is blank, there is not file log whatever value is given to the option
+#   <filelevel> (there is no default file).
+filelevel: INFO
 
-# Console level: use NONE for no console output, otherwise the level wanted.
-#   Logs will be directed to stdout.  Levels are the ones from the logging module:
-#   CRITICAL, ERROR, WARN or WARNING, INFO and DEBUG.
-consolelevel: NONE
+# Number of files required for the rotating files. Default is 3.
+filenum:3
+
+# Maximum size of each log file, in KB. Default is 50'000.
+filesize: 50000
 
 # Email credentials; leave empty if not required.
 #   All CRITICAL level logs are sent to this email, if defined.
