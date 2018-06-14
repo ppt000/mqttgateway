@@ -44,7 +44,7 @@ def _get_logger(fullmodulename):
         else: logname = '.'.join((_THIS.Properties.name, modulename))
     return logging.getLogger(logname)
 
-def _get_path(extension, path_given, app_name=None, app_dirs=None):
+def _get_path(path_given, extension=None, app_name=None, app_dirs=None):
     ''' Returns the absolute path of a file following the application rules.
 
     Rules:
@@ -59,14 +59,15 @@ def _get_path(extension, path_given, app_name=None, app_dirs=None):
    - however for Windows systems, use of the drive letter might be an issue and has not been tested.
 
     Args:
-        extension (string): the default extension of the file
         path_given (string): any type pf path; see rules
+        extension (string): the default extension of the file
         app_name (string): the application name for the defaults
         app_dirs (list of strings): the default directories where to look for the files
     '''
     if app_name is None: app_name = _THIS.Properties.name
     if app_dirs is None: app_dirs = _THIS.Properties.directories
-    if extension[0] != '.': extension = '.' + extension # just in case
+    if not extension: extension = ''
+    elif extension[0] != '.': extension = '.' + extension
     if not path_given or path_given == '.': path_given = './'
     if path_given == '..': path_given = '../'
     dirname, filename = os.path.split(path_given.strip())
@@ -97,7 +98,7 @@ def _init_properties(app_path=None, app_name=None):
     # Find configuration file
     if len(sys.argv) >= 2: pathgiven = sys.argv[1].strip()
     else: pathgiven = '' # default location in case no file name or path is given
-    config_file_path = _get_path('.conf', pathgiven, app_name=app_name,
+    config_file_path = _get_path(pathgiven, extension='.conf', app_name=app_name,
                                  app_dirs=(current_working_dir, script_dir))
     config_file_dir = os.path.dirname(config_file_path)
     dirs = (config_file_dir, current_working_dir, script_dir)
