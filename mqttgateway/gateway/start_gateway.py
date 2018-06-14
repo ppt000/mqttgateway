@@ -53,9 +53,14 @@ def _startgateway(gateway_interface):
     # Initialise the logger handlers ==============================================================
     logfilename = cfg.get('LOG', 'logfilename')
     if not logfilename: logfilepath = None
-    else: logfilepath = app.Properties.get_path('.log', logfilename)
+    else: logfilepath = app.Properties.get_path(logfilename, extension='.log')
     # create the tuple to send the arguments to initlogger
-    logfiledata = (logfilepath, cfg.getboolean('LOG', 'debug'), cfg.get('LOG', 'consolelevel'))
+    logfiledata = (cfg.get('LOG', 'consolelevel'),
+                   logfilepath,
+                   cfg.get('LOG', 'filelevel'),
+                   cfg.get('LOG', 'filenum'),
+                   cfg.get('LOG', 'filesize')
+                    )
     emaildata = (cfg.get('LOG', 'emailhost'), cfg.get('LOG', 'emailport'),
                  cfg.get('LOG', 'emailaddress'), app.Properties.name)
     initlogger(app.Properties.root_logger, logfiledata, emaildata)
@@ -89,7 +94,7 @@ def _startgateway(gateway_interface):
     mapping_flag = cfg.getboolean('MQTT', 'mapping')
     mapfilename = cfg.get('MQTT', 'mapfilename')
     if mapping_flag and mapfilename:
-        mapfilepath = app.Properties.get_path('.map', mapfilename)
+        mapfilepath = app.Properties.get_path(mapfilename, extension='.map')
         try:
             with open(mapfilepath, 'r') as mapfile:
                 map_data = json.load(mapfile)
