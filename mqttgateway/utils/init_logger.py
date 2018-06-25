@@ -1,4 +1,4 @@
-3'''
+'''
 Function to initialise a logger with pre-defined handlers.
 
 .. reviewed 30 May 2018
