@@ -1,3 +1,3 @@
 ''' Current version of mqttgateway'''
 
-version = '0.208'
+version = '0.209'
