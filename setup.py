@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
-import mqttgateway.version
+from mqttgateway.version import __version__
 
 here = path.abspath(path.dirname(__file__))
 
@@ -15,7 +15,7 @@ with open(path.join(here, 'docs/source/readme.rst'), encoding='utf-8') as f:
 
 setup(
     name='mqttgateway',
-    version=mqttgateway.version.version,
+    version=__version__,
     description='Framework for MQTT Gateways.',
     long_description=long_description,
     #long_description_content_type='text/x-rst', # apparently it is optional if rst

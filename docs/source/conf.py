@@ -20,7 +20,7 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
 
-import mqttgateway.version
+from mqttgateway.version import __version__
 
 # -- Project information -----------------------------------------------------
 
@@ -29,9 +29,9 @@ copyright = u'2018, Paolo Taddonio'
 author = u'Paolo Taddonio'
 
 # The short X.Y version
-version = mqttgateway.version.version
+version = __version__
 # The full version, including alpha/beta/rc tags
-release = version
+release = __version__
 
 
 # -- General configuration ---------------------------------------------------
