@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
-from mqttgateway.version import __version__
+from mqttgateway import __version__
 
 here = path.abspath(path.dirname(__file__))
 
