@@ -19,7 +19,6 @@ _LEVELNAMES = {
 
 def initlogger(logger, logfiledata, emaildata):
     ''' Initialise the logging environment for the application.
-from cgi import logfile
 
     The logger passed as parameter should be sent by the 'root' module if
     hierarchical logging is the objective. The logger is then initialised with
@@ -78,7 +77,7 @@ from cgi import logfile
     else: file_size = logfiledata[4]
     # create the console handler, if wanted
     if console_level in _LEVELNAMES:
-        formatter = logging.Formatter('%(asctime)s %(name)-20s %(levelname)-8s: %(message)s')
+        formatter = logging.Formatter('%(asctime)s %(threadName)-10s %(name)-20s %(levelname)-8s: %(message)s')
         cons_handler = logging.StreamHandler(sys.stdout)
         cons_handler.setLevel(_LEVELNAMES[console_level])
         cons_handler.setFormatter(formatter)
