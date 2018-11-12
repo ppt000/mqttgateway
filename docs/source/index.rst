@@ -23,11 +23,5 @@ Contents
    Tutorial <tutorial>
    Configuration <configuration>
    Project Description <description>
-   Package Documentation <mqttgateway_package>
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
+   Package Documentation <mqttgateway>
+   Indices and Tables <indices_tables>

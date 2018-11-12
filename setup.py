@@ -24,16 +24,15 @@ setup(
     author_email='paolo.taddonio@empiluma.com',
     license='MIT',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
-        'Topic :: Software Development :: Build Tools',
+        'Topic :: Software Development :: Embedded Systems',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         ],
     keywords='mqtt gateway',
     packages=find_packages(),
-    install_requires=['paho-mqtt >= 1.3.1'],
+    install_requires=['paho-mqtt >= 1.4.0'],
     package_data={'': ['*.conf', '*.json']},
-    entry_points={'console_scripts': ['dummy2mqtt = mqttgateway.dummy.dummy_start:main']}
+    entry_points={'console_scripts': ['dummy2mqtt = mqttgateway.dummy_start:main']}
 )

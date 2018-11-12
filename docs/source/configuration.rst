@@ -9,5 +9,5 @@ Configuration
     ``configuration.py`` inside the ``gateway`` package, is well documented
     and is a good starting point to understand the various options.
 
-.. literalinclude:: ../../mqttgateway/gateway/configuration.py
+.. literalinclude:: ../../mqttgateway/default.conf
     :language: python
