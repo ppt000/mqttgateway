@@ -1,39 +1,48 @@
 ''' This module is the bridge between the internal and the MQTT representation of messages.
 
-.. Reviewed 30May2018
+.. Reviewed 11 November 2018
 
 As a reminder, we define the MQTT syntax as follows:
 
-- topic: ``root/function/gateway/location/device/sender/type-{C or S}``
-- payload: action or status, in plain text or in a json string e.g. ``{key1:value1,key2:value2,..}``
+- topic::
+
+    root/function/gateway/location/device/sender/type-{C or S}
+
+- payload: action or status, in plain text or in a json string like ``{key1:value1,key2:value2,..}``
 
 '''
+
+#TODO: Review the tests in **main**
+#TODO: Review position of class TokenMap as a sub-class. Take it out?
 
 from collections import namedtuple
 import Queue
 import json
 import paho.mqtt.client as mqtt
-import mqttgateway.utils.app_properties as app
-_logger = app.Properties.get_logger(__name__)
+
+from mqttgateway.app_properties import AppProperties
 
 class internalMsg(object):
     '''
     Defines all the characteristics of an internal message.
 
-    Behaviour of ``None``: even if it could be interesting to differentiate between a
-    characteristic set to ``None`` and one set to an empty string (an empty string could still
-    be mapped for example), currently they are considered the same, i.e. a non existent value.
-    Therefore ``None`` values are converted always to empty strings.
+    Note about the behaviour of ``None``:
+        a characteristic set to ``None`` and one set to an empty string are considered
+        the same, and they both mean a non existent or missing value.
+        It could be interesting to differentiate between then at a later stage as,
+        for example, an empty string could still be mapped to an existing internal value,
+        as if it was a default, but that is not the case here.
+        Therefore ``None`` values are always converted to empty strings.
 
     Args:
-        iscmd (bool): Indicates if the message is a command (True) or a status (False), optional
-        function (string): internal representation of function, optional
-        gateway (string): internal representation of gateway, optional
-        location (string): internal representation of location, optional
-        device (string): internal representation of device, optional
-        sender (string): internal representation of sender, optional
-        action (string): internal representation of action, optional
-        arguments (dictionary of strings): all values should be assumed to be strings, optional
+        iscmd (bool): Indicates if the message is a command (True) or a status (False)
+        function (string): internal representation of function
+        gateway (string): internal representation of gateway
+        location (string): internal representation of location
+        device (string): internal representation of device
+        sender (string): internal representation of sender
+        action (string): internal representation of action
+        arguments (dictionary of strings): all values should be assumed to be strings
 
     '''
 
@@ -57,6 +66,7 @@ class internalMsg(object):
 
     def copy(self):
         ''' Creates a copy of the message.'''
+        #TODO: use deepcopy()?
         return internalMsg(iscmd=self.iscmd,
                            function=self.function,
                            gateway=self.gateway,
@@ -67,7 +77,7 @@ class internalMsg(object):
                            arguments=self.arguments.copy())
 
     def str(self):
-        ''' Stringifies a class instance.'''
+        ''' Stringifies the instance content.'''
         return ''.join(('type= ', 'C' if self.iscmd else 'S',
                         '- function= ', str(self.function),
                         '- gateway= ', str(self.gateway),
@@ -86,31 +96,53 @@ class internalMsg(object):
 
         Args:
             response (string): code or abbreviation for response, e.g. ``OK```or ``ERROR``
-            reason (string): longer description of the response
+            reason (string): longer description of the responses
         '''
+        #TODO: elaborate
         self.iscmd = False
         self.arguments['response'] = response
         self.arguments['reason'] = reason
         return self
 
 class MsgList(Queue.Queue, object):
-    ''' Implementation of a Queue list just in case its needed.
+    ''' Message list to communicate between the library and the interface.
+
+    Defined as a Queue list in case the library is used in multi-threading mode.
 
     The methods are called ``push`` and ``pull`` in order to differentiate them from the
     *usual* names (put, get, append, pop, ...).
-    TODO: implement maxsize and timeout.
     '''
+    #TODO: implement maxsize and timeout.
 
     def __init__(self):
         super(MsgList, self).__init__(maxsize=0)
 
-    def push(self, item):
-        ''' Equivalent to self._list.append(item)'''
-        super(MsgList, self).put(item, block=True, timeout=None)
+    def push(self, item, block=True, timeout=None):
+        ''' Pushes the item at the end of the list.
 
-    def pull(self):
-        ''' Equivalent to self._list.pop(0)'''
-        try: item = super(MsgList, self).get(block=False)
+        Equivalent to append or put in other list implementations.
+        The ``block`` and ``timeout`` arguments have the same meaning
+        as in the ``Queue`` library.
+
+        Args:
+            item (object): the object to push in the list
+            block (boolean): in case the list is full
+            timeout (float): wait time if block == True
+        '''
+        super(MsgList, self).put(item, block, timeout)
+
+    def pull(self, block=False, timeout=None):
+        ''' Pull the first item from the list.
+
+        Equivalent to pop or get in other list implementations.
+        The ``block`` and ``timeout`` arguments have the same meaning
+        as in the ``Queue`` library.
+
+        Args:
+            block (boolean): in case the list is empty
+            timeout (float): wait time if block == True
+        '''
+        try: item = super(MsgList, self).get(block, timeout)
         except Queue.Empty: return None
         super(MsgList, self).task_done()
         return item
@@ -137,8 +169,13 @@ class msgMap(object):
     ''' Contains the mapping data and the conversion methods.
 
     The mapping data is read from a JSON style dictionary.
-    To access the maps use: mqtt_token = maps.*field*.i2m(internal_token)
-    Example: mqtt_token = maps.gateway.i2m(internal_token)
+    To access the maps use::
+
+        mqtt_token = maps.*field*.i2m(internal_token)
+
+    Example::
+
+        mqtt_token = maps.gateway.i2m(internal_token)
 
     Args:
         jsondict (dictionary): contains the map data in the agreed format;
@@ -192,6 +229,7 @@ class msgMap(object):
 
         @staticmethod
         def _mapnone(token, dico):
+            # pylint: disable=unused-argument
             ''' Returns the argument unchanged.
 
             Args:
@@ -203,6 +241,7 @@ class msgMap(object):
             '''
             if token is None: return ''
             return token
+            # pylint: enable=unused-argument
 
         @staticmethod
         def _maploose(token, dico):
@@ -241,7 +280,7 @@ class msgMap(object):
 
     def __init__(self, jsondict=None):
         if not jsondict: jsondict = NO_MAP
-        self._sender = app.Properties.name
+        self._sender = AppProperties().get_name()
         try: self.root = jsondict['root']
         except KeyError: raise ValueError('JSON dictionary has no key <root>.')
         try: self.topics = jsondict['topics']
@@ -373,7 +412,7 @@ class msgMap(object):
         return mqtt_msg
 
 def test():
-    ''' docstring '''
+    ''' Test function. '''
     # load a valid map in JSON format
     jsonfilepath = './test_map2.json'
     with open(jsonfilepath, 'r') as json_file:
@@ -394,6 +433,7 @@ def test():
     print i_args
 
 def reverse():
+    ''' Another test function.'''
     jsonfilepath = './test_map.json'
     with open(jsonfilepath, 'r') as json_file:
         json_data = json.load(json_file)
