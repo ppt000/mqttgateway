@@ -1,7 +1,55 @@
-'''
-Function to initialise a logger with pre-defined handlers.
+'''Functions to create pre-defined handlers and add them to a logger.
 
-.. reviewed 30 May 2018
+.. REVIEWED 11 November 2018
+
+Reminder of attributes for formatting log records
+(from https://docs.python.org/2/library/logging.html#logrecord-attributes):
+
+=================  ==================== ==============================================================
+Attribute name       Format               Description
+=================  ==================== ==============================================================
+asctime            %(asctime)s          Human-readable time when the LogRecord was created.
+                                          By default this is of the form '2003-07-08 16:49:45,896'
+                                          (the numbers after the comma are millisecond portion of
+                                          the time).
+created            %(created)f          Time when the LogRecord was created (as returned by
+                                          time.time()).
+filename           %(filename)s         Filename portion of pathname. mynote: = module + '.py' for
+                                          python scripts.
+funcName           %(funcName)s         Name of function containing the logging call.
+levelname          %(levelname)s        Text logging level for the message ('DEBUG', 'INFO',
+                                          'WARNING', 'ERROR', 'CRITICAL').
+levelno            %(levelno)s          Numeric logging level for the message (DEBUG, INFO,
+                                           WARNING, ERROR, CRITICAL).
+lineno             %(lineno)d           Source line number where the logging call was issued
+                                          (if available).
+module             %(module)s           Module (name portion of filename).
+msecs              %(msecs)d            Millisecond portion of the time when the LogRecord was
+                                          created.
+message            %(message)s          The logged message, computed as msg % args.
+                                          This is set when Formatter.format() is invoked.
+name               %(name)s             Name of the logger used to log the call.
+pathname           %(pathname)s         Full pathname of the source file where the logging call
+                                          was issued (if available).
+process            %(process)d          Process ID (if available).
+processName        %(processName)s      Process name (if available). mynote: is always "MainProcess".
+relativeCreated    %(relativeCreated)d  Time in milliseconds when the LogRecord was created,
+                                          relative to the time the logging module was loaded.
+thread             %(thread)d           Thread ID (if available).
+threadName         %(threadName)s       Thread name (if available).
+=================  ==================== ==============================================================
+
+
+The argument datefmt to the Formatter class is of the form: "%Y-%m-%d %H:%M:%S".
+The complete set of fields can be found here:
+`time.strftime <https://docs.python.org/2/library/time.html#time.strftime>`_.
+
+The *default* (ISO8601) formatter seems to be::
+
+    logging.Formatter(fmt='%(asctime)s.%(msecs)03d',datefmt='%Y-%m-%d,%H:%M:%S')
+
+The strings to use to identify the logging levels are defined in the
+constant :py:data:`_LEVELNAMES`.
 '''
 
 import sys
@@ -16,100 +64,152 @@ _LEVELNAMES = {
     'DEBUG' : logging.DEBUG,
     'NOTSET' : logging.NOTSET
     }
+''' Dictionary {"level as string": value in the logging library} '''
 
-def initlogger(logger, logfiledata, emaildata):
-    ''' Initialise the logging environment for the application.
+# Formatters
+_FORMAT_NO_DATE = '%(module)s.%(lineno)d-%(funcName)s '\
+                  '%(threadName)s %(levelname)s: %(message)s'
+_FORMATTER_NO_DATE = logging.Formatter(fmt=_FORMAT_NO_DATE)
 
-    The logger passed as parameter should be sent by the 'root' module if
-    hierarchical logging is the objective. The logger is then initialised with
-    the following handlers:
+_FORMAT_LONG = '%(asctime)s %(module)-20s.%(lineno)04d-%(funcName)-20s '\
+               '%(threadName)-10s %(levelname)-8s:\n\t%(message)s'
+_FORMATTER_LONG = logging.Formatter(_FORMAT_LONG)
 
-    - the standard 'Stream' handler will always log level WARN and above;
-    - a rotating file handler, with fixed parameters (max 50kB, 3 rollover
-      files); the level for this handler is DEBUG if the parameter 'log_debug' is
-      True, INFO otherwise; the file name for this log is given by the
-      log_filepath parameter which is used as is; an error message is logged in
-      the standard handler if there was a problem creating the file;
-    - an email handler with the level set to CRITICAL;
+_FORMAT_SHORT = '%(asctime)s.%(msecs)03d %(module)-15s %(lineno)4d %(funcName)-15s '\
+                '%(threadName)-10s %(levelname)-8s: %(message)s'
+_FORMATTER_SHORT = logging.Formatter(_FORMAT_SHORT, datefmt="%H%M%S")
+
+def initlogger(logger, log_data=None):
+    ''' Configures a logger with pre-defined handlers based on user-defined configuration data.
+
+    Uses :py:meth:`initloghandlers` to create the handler, check documentation there for
+    more details on the format of ``log_data``.
+
+    The logger level is forced to ``DEBUG`` here.
 
     Args:
         logger: the actual logger object to be initialised;
-        logfiledata (tuple): 3 elements tuple made of
-          [0] = logfilepath (string): the log file path, if None, file logging is disabled;
-          [1] = filelevel (string): the level of log to be sent to the file, or NONE;
-          [2] = consolelevel (string): the level of log to be sent to the console (stdout), or NONE.
-        emaildata (tuple): 4 elements tuple; no email logging if either of first 3 values invalid
-          [0] = host (string),
-          [1] = port (int),
-          [2] = address (string), ,is enabled;
-          [3] = app_name (string).
+        log_data (dict): dictionary of configuration data.
 
     Returns:
-        Nothing
-
-    Raises:
-        any IOErrors thrown by file handling methods are caught.
+        A string made of various lines of messages relating to what handler has been added to the
+        logger.  This string can then be logged by the caller or silenced as desired.
     '''
+    if log_data is None:
+        logger.addHandler(logging.NullHandler) # by default
+        return 'Logger returned with a NullHandler only.'
+    handlers, msg = initloghandlers(log_data)
+    logger.setLevel(logging.DEBUG)
+    for handler in handlers:
+        logger.addHandler(handler)
+    return msg
 
-    logger.setLevel(logging.DEBUG) # to log ALL this function logs
-    #===========================================================================
-    # Reminder of various format options:
-    # %(processName)s is always <MainProcess>
-    # %(module)s is always the name of the current module where the log is called
-    # %(filename)s is always the 'module' field with .py afterwards
-    # %(pathname)s is the full path of the file 'filename'
-    # %(funcName)s is the name of the function where the log has been called
-    # %(name) is the name of the current logger
-    #===========================================================================
-    # create the stream handler. It should always work.
-    formatter = logging.Formatter('%(name)-20s %(levelname)-8s: %(message)s')
+def initloghandlers(log_data):
+    ''' Returns a list of handlers based on user-defined configuration data.
+
+    The ``log_data`` has to be in the form of::
+
+            {
+             'console':
+                {'level': xxxx },
+             'file':
+                {'level': yyyy,
+                 'path': zzzz,
+                 'number': xxxx,
+                 'size': yyyy},
+             'email':
+                {'host': xxxx,
+                 'port': yyyy,
+                 'address': zzzz,
+                 'subject': xxxx }
+            }
+
+    The following handlers are created and appended to the list returned:
+
+    - the standard 'Stream' handler, which will always log level WARN and above to stderr;
+    - a console log handler;
+    - a rotating file handler that requires a log level, a file path (used as is),
+      the maximum size of the file and the desired number of rotating files;
+    - an email handler with the level set to CRITICAL.
+
+    The functionality is provided by the standard ``logging`` library.  Check the
+    documentation for more information on the various parameters.
+
+    Args:
+        log_data (dict): dictionary of configuration data
+
+    Returns:
+        A pair made of the list of handlers and a message (string), to be logged by the caller
+        or silenced as desired.
+    '''
+    handlers = []
+    msg_list = ['Configuration of the logger:']
+    # create the stream handler to stderr. It should always work.
     stream_handler = logging.StreamHandler(sys.stderr)
-    stream_handler.setLevel(logging.DEBUG) # set level temporarily to log all in this function
-    stream_handler.setFormatter(formatter)
-    logger.addHandler(stream_handler)
-    # assign the logfiledata for clarity
-    console_level = logfiledata[0]
-    log_filepath = logfiledata[1]
-    file_level = logfiledata[2]
-    if not logfiledata[3]: file_num = 3
-    else: file_num = logfiledata[3]
-    if not logfiledata[4]: file_size = 50000
-    else: file_size = logfiledata[4]
-    # create the console handler, if wanted
-    if console_level in _LEVELNAMES:
-        formatter = logging.Formatter('%(asctime)s %(threadName)-10s %(name)-20s %(levelname)-8s: %(message)s')
+    stream_handler.setLevel(logging.WARN)
+    stream_handler.setFormatter(_FORMATTER_NO_DATE) # normally the timestamp is added anyway
+    handlers.append(stream_handler)
+    # create the console handler
+    try:
+        console_data = log_data['console']
+        console_level = _LEVELNAMES[console_data['level']]
+    except (KeyError, IndexError) as err: # no console log
+        msg_list.append(''.join(('No console log configured. Reason: ', str(err), '.')))
+    else:
         cons_handler = logging.StreamHandler(sys.stdout)
-        cons_handler.setLevel(_LEVELNAMES[console_level])
-        cons_handler.setFormatter(formatter)
-        logger.addHandler(cons_handler)
-    # create the file handler, for all logs.
-    if log_filepath is not None and file_level in _LEVELNAMES:
-        formatter = logging.Formatter('%(asctime)s %(module)-20s %(levelname)-8s: %(message)s')
-        try: file_handler = logging.handlers.RotatingFileHandler(log_filepath, maxBytes=file_size,
-                                                                 backupCount=file_num)
+        cons_handler.setLevel(console_level)
+        cons_handler.setFormatter(_FORMATTER_SHORT)
+        handlers.append(cons_handler)
+        msg_list.append(''.join(('Console log configured to level ', console_data['level'], '.')))
+    # create the file handler
+    try:
+        file_data = log_data['file']
+        file_level = _LEVELNAMES[file_data['level']]
+        file_path = file_data['path']
+        if not file_path:
+            raise ValueError('File path set to None or empty')
+        file_num = file_data['number']
+        file_size = file_data['size']
+    except (KeyError, IndexError, ValueError) as err: # no file log then
+        msg_list.append(''.join(('No file log configured. Reason: ', str(err), '.')))
+    else:
+        try: file_handler = logging.handlers.\
+            RotatingFileHandler(filename=file_path,
+                                mode='a',
+                                maxBytes=file_size,
+                                backupCount=file_num)
         except (OSError, IOError) as err: # there was a problem with the file
-            logger.error(''.join(('There was an error <', str(err), '> using file <', log_filepath,
-                                  '> to handle logs. No file used.')))
+            msg_list.append(''.join(('No file log configured. Reason: ', str(err), '.')))
         else:
-            logger.info(''.join(('Using <', log_filepath, '> to log the <',
-                                 str(file_level), '> level.')))
-            file_handler.setLevel(_LEVELNAMES[file_level])
-            file_handler.setFormatter(formatter)
-            logger.addHandler(file_handler)
-    # create the email handler.
-    email_host = emaildata [:2]
-    email_address = emaildata[2]
-    app_name = emaildata[3]
-    if email_host[0] and email_host[1] and email_address:
-        email_handler = logging.handlers. \
-        SMTPHandler(email_host, email_address, email_address,
-                    ''.join(('Error message from application ', app_name, '.')))
+            file_handler.setLevel(file_level)
+            file_handler.setFormatter(_FORMATTER_LONG)
+            handlers.append(file_handler)
+            msg_list.append(''.join(('File log configured to level ', file_data['level'],
+                                     'using file <', file_path, '>.')))
+    # create the email handler
+    try:
+        email_data = log_data['email']
+        email_host = (email_data['host'], email_data['port'])
+        if not email_host[0] or not email_host[1]:
+            raise ValueError('Host and/or port set to None or empty')
+        email_address = email_data['address']
+        if not email_address:
+            raise ValueError('Address set to None or empty')
+        email_subject = email_data['subject']
+    except (KeyError, ValueError) as err: # no email log
+        msg_list.append(''.join(('No email log configured. Reason: ', str(err), '.')))
+    else:
+        email_handler = logging.handlers.\
+            SMTPHandler(mailhost=email_host,
+                        fromaddr=email_address,
+                        toaddrs=email_address,
+                        subject=email_subject)
         email_handler.setLevel(logging.CRITICAL)
-        email_handler.setFormatter(formatter)
-        logger.addHandler(email_handler)
-
-    stream_handler.setLevel(logging.WARN) # restore the level of the default handler
-    # TODO: set the level of the logger to the minimum level needed
+        email_handler.setFormatter(_FORMATTER_LONG)
+        handlers.append(email_handler)
+        msg_list.append(''.join(('Email log configured to level CRITICAL using email <',
+                                 str(email_address), '>.')))
+    return handlers, '\n\t'.join(msg_list)
 
 if __name__ == '__main__':
     pass
