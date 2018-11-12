@@ -1,6 +1,6 @@
 ''' An exception class that throttles events in case an error is triggered too often.
 
-.. reviewed 30 May 2018
+.. REVIEWED 11 November 2018
 '''
 
 import time
@@ -12,24 +12,25 @@ class ThrottledException(Exception):
 
     This exception can be used as a base class instead of :class:`Exception`.
     It adds a counter and a timer that allow to silence the error for a while if
-    desired.  Only after a given period a trigger is set to ``True`` to indicate that a number
-    of errors have happened and it is time to report them.
+    desired.  Only after a given period a trigger is set to ``True`` to indicate
+    that a number of errors have happened and it is time to report them.
 
-    It creates 2 members:
+    It defines 2 members:
 
     - ``trigger`` is a boolean set to True after the requested lag;
     - ``report`` is a string giving some more information on top of the latest message.
 
     The code using these exceptions can test the member ``trigger`` and decide to silence
     the error until it is True.  At any point one can still decide to use these exceptions
-    as normal ones and ignore the ``trigger`` and ``report`` members.
+    as normal ones, ignore the ``trigger`` and ``report`` members and just raise the
+    exception as *normal*.
 
     Usage:
 
     .. code-block:: python
 
         try:
-            some statements that might raise your own exception derived from ThrottledException
+            #some statements that might raise your own exception derived from ThrottledException
         except YourExceptionError as err:
             if err.trigger:
                 log(err.report)
