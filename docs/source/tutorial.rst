@@ -1,9 +1,12 @@
-.. originally copied from mqtt_gateways documentation,
-   reviewed by Paolo on 24 May 2018
+.. REVIEWED 13 November 2018
 
 ########
 Tutorial
 ########
+
+.. note::
+    This tutorial refers to an early library. An update is in development.
+
 
 Let's go through a practical example, with a very simple protocol.
 

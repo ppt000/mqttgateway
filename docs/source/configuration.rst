@@ -1,12 +1,14 @@
+.. REVIEWED 13 November 2018
+
 *************
 Configuration
 *************
 
 .. note::
-    Coming soon!
+    In development
 
-    In the meantime, the default configuration, which is in the python module
-    ``configuration.py`` inside the ``gateway`` package, is well documented
+    In the meantime, the default configuration, which is in the file
+    ``default.conf`` inside the library package, is well documented
     and is a good starting point to understand the various options.
 
 .. literalinclude:: ../../mqttgateway/default.conf

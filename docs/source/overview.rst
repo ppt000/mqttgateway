@@ -1,5 +1,4 @@
-.. originally copied from mqtt_gateways documentation,
-   reviewed by Paolo on 22 May 2018
+.. REVIEWED 9 November 2018
 
 ########
 Overview
@@ -19,24 +18,26 @@ defining a messaging model and expressing it in an MQTT syntax to be shared by a
 This model is implemented as a python library aimed at facilitating coding the gateways
 between devices that do not support natively MQTT communication and the MQTT network.
 These gateways can then run as services on machines connected to these
-devices via whatever interface is available: serial, bluetooth, TCP, or else.
+devices via whatever interface is available: serial, Bluetooth, TCP, or else.
 
 .. image:: basic_diagram.png
    :scale: 50%
 
-Concepts
-========
+Description
+===========
 
 This project has two parts:
 
 1. The definition of the messaging model.
-   It is an abstraction layer that defines a message not only by destination and content
-   but by a few attributes adapted to domestic IoT environments.
+   It is an abstraction layer that defines a message by a few characteristics, adapted to
+   domestic IoT environments, that help resolving the destination and purpose of the
+   message in a flexible and intuitive way.
 2. The implementation of this model through a python library.
    The library takes care of formatting and translating back and forth the messages
-   between their MQTT syntax and their internal representation.
+   between their MQTT syntax and their internal representation, as well as managing
+   the connection to the broker and various application necessities.
 
-For more information, go to :doc:`Concepts <concepts>`.
+For more information, go to :doc:`Description <description>`.
 
 Usage
 =====
@@ -50,7 +51,7 @@ configuration and show how it is reacting to incoming MQTT messages, for example
 Developers can then write their own interface by using the **dummy** interface
 as a template, or following the tutorial alongside the theoretical interface **entry**.
 
-End users will download already developped interfaces, for which this library will simply
+End users will download already developed interfaces, for which this library will simply
 be a dependency.
 
 For a complete guide on how to develop an interface, go to :doc:`Tutorial <tutorial>`.

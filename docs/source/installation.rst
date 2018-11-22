@@ -1,5 +1,4 @@
-.. originally copied from mqtt_gateways documentation,
-   Finished review by Paolo on 23 May 2018
+.. REVIEWED 9 November 2018
 
 ############
 Installation
@@ -8,7 +7,7 @@ Installation
 Download
 ========
 
-Get the library from the PyPi repository with the ``pip`` command, preferrably using the ``--user`` option:
+Get the library from the PyPi repository with the ``pip`` command, preferably using the ``--user`` option:
 
 .. code-block:: none
 
@@ -23,8 +22,10 @@ virtual environment.
 
 Running ``pip`` also installs an executable file (``exe`` in Windows or executable python
 script in Linux) called ``dummy2mqtt``.  It launches the demo interface **dummy** with the
-default configuration. Its location *should* be **UPDATE NEEDED HERE** on Windows and
-**UPDATE NEEDED HERE** on Linux.  If not, search for the file manually.
+default configuration. Its location *should* be ``%APPDATA%\Python\Scripts\dummy2mqtt.exe``
+on Windows and ``~/.local/bin/dummy2mqtt`` on Linux
+(*it probably depends on the distribution though...*).
+If not, please search for the file manually.
 
 Also, those same locations *should* be already defined in the **PATH** environment variable and
 therefore the executable *should* launch from any working directory.  If not, the variable will
@@ -34,10 +35,10 @@ Configuration
 =============
 
 A configuration file is needed for each interface.  In the library, the default interface ``dummy``
-has its own configuration file ``dummy2mqtt.conf`` inside the package folder ``dummy``.
+has its own configuration file ``dummy2mqtt.conf`` inside the package folder.
 
-The configuration file has a standard ``INI`` syntax,
-with sections identified by ``[SECTION]`` and options within sections identified
+The configuration file has a standard ``INI`` syntax, as used by the standard library
+``ConfigParser`` with sections identified by ``[SECTION]`` and options within sections identified
 by ``option:value``.  Comments are identified with a starting character ``#``.
 
 There are four sections:
@@ -46,7 +47,7 @@ There are four sections:
    under the option ``host``.
    The address of the MQTT broker should be provided in the same format
    as expected by the **paho.mqtt** library, usually a raw IP address
-   (``192.168.1.55`` for example) or an address like *test.mosquitto.org*.
+   (``192.168.1.55`` for example) or an address like ``test.mosquitto.org``.
    The default port is 1883, if it is different it can also be indicated
    in the configuration file under the option ``port``.
    Authentication is not available at this stage.
@@ -60,7 +61,7 @@ There are four sections:
    code through a dictionary initialised with all the ``option:value`` pairs.
 
 #. ``[CONFIG]`` is a section reserved to the library to store information about the configuration
-   loading process.  It is not visible in the template files but it is created at runtime.
+   loading process.  Even if it is not visible in the configuration file it is created at runtime.
 
 For more details about the ``.conf`` file, its defaults and the command line arguments,
 go to :doc:`Configuration <configuration>`.
@@ -75,14 +76,11 @@ If ``pip`` installed correctly the executable files, just launch it from anywher
     dummy2mqtt
 
 By default, the process will log messages from all levels into the console.
-It should start printing a banner message to indicate the application has started,
+It should start logging a banner message to indicate the application has started,
 then a list of the full configuration used.
 
 If the MQTT connection is successful it should say so as well as
 displaying the topics to which the application has subscribed.
-
-First Run
-=========
 
 After the start-up phase, the **dummy** interface logs (at a DEBUG level)
 any MQTT messages it receives.  It also emits a unique message every 30 seconds.
@@ -113,15 +111,20 @@ The mapping data
 
 The mapping data is an optional feature that allows to map some or every keyword in the
 MQTT vocabulary into the equivalent keyword in the interface.
-This mapping is a very simple one-to-one relationship between keywords of each characteristic,
+This mapping is a very simple many-to-one relationship between MQTT and internal keywords
+for each characteristic,
 and its use is only to isolate the internal code from any changes in the MQTT vocabulary.
+
 For the **dummy** interface, the mapping data is provided by the text file
-``dummy_map.json``.  It's just there as an example, as,
-once again, the **dummy** interface really doesn't do anything, and it is disabledby default.
+``dummy_map.json``.  It's just there as an example, and actually is disabled by default.
+To enable it, change the configuration file accordingly and test the mapping with the MQTT
+monitor app.  If you send MQTT messages with MQTT keywords from the mapping file, you should
+see their *translation* in the logs.
+
 Note that the map file also contains the *root* of the MQTT messages and the topics that the
 interface should subscribe to.
 
-For more details on the mapping data, go to :doc:`Concepts <concepts>`.
+For more details on the mapping data, go to :doc:`Description <description>`.
 
 Deploying a gateway
 ===================
