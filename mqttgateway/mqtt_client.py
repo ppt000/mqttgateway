@@ -43,6 +43,10 @@ class connectionError(thrx.ThrottledException):
 
 # pylint: disable=unused-argument
 
+def mqttmsg_str(mqttmsg):
+    ''' Returns a string representing the MQTT message object.'''
+    return ''.join(('Topic: <', mqttmsg.topic, '> - Payload: <', mqttmsg.payload, '>.'))
+
 def _on_connect(client, userdata, flags, return_code):
     ''' The MQTT callback when a connection is established.
 
@@ -61,8 +65,9 @@ def _on_connect(client, userdata, flags, return_code):
                           str(return_code), '>: ', _MQTT_RC[return_code], '.')))
         return
     LOG.info(''.join(('Connected! Result message: ', _MQTT_RC[return_code], '.')))
-    client.connected = True
-    try: (result, mid) = client.subscribe(client.topics)
+    client.mg_connected = True
+    try:
+        (result, mid) = client.subscribe(client.mg_topics)
     except ValueError as err:
         LOG.info(''.join(('Topic subscription error:\n\t', repr(err))))
     else:
@@ -73,7 +78,7 @@ def _on_connect(client, userdata, flags, return_code):
         else:
             LOG.debug(''.join(('Message id <', str(mid),
                                '>: subscriptions successful to list of (topics, qos):\n\t',
-                               str(client.topics))))
+                               str(client.mg_topics))))
     return
 
 def _on_subscribe(client, userdata, mid, granted_qos):
@@ -88,10 +93,10 @@ def _on_subscribe(client, userdata, mid, granted_qos):
 def _on_disconnect(client, userdata, return_code):
     ''' The MQTT callback when a disconnection occurs.
 
-    It sets to False the ``connected`` attribute.
+    It sets to False the ``mg_connected`` attribute.
     '''
     LOG.info(''.join(('Client has disconnected with code <', str(return_code), '>.')))
-    client.connected = False
+    client.mg_connected = False
 
 def _on_message(client, userdata, mqtt_msg):
     ''' The MQTT callback when a message is received from the MQTT broker.
@@ -100,8 +105,7 @@ def _on_message(client, userdata, mqtt_msg):
     then appended to the incoming message list for the gateway interface to
     execute it later.
     '''
-    LOG.debug(''.join(('MQTTMsgRcvd-Topic:<', mqtt_msg.topic,
-                       '>-Payload:<', mqtt_msg.payload, '>.')))
+    LOG.debug(''.join(('MQTT message received:\n\t', mqttmsg_str(mqtt_msg))))
     client.on_msg_func(mqtt_msg)
     return
 
@@ -136,11 +140,11 @@ class mgClient(mqtt.Client):
         if on_msg_func is None: self.on_msg_func = lambda x: None
         else: self.on_msg_func = on_msg_func
         if topics is None: topics = []
-        self._mg_topics = [] # list of tuples (topic, qos)
+        self.mg_topics = [] # list of tuples (topic, qos)
         for topic in topics:
-            self._mg_topics.append((topic, 0))
+            self.mg_topics.append((topic, 0))
         self._mg_userdata = userdata
-        self._mg_connected = False
+        self.mg_connected = False
 
         self._mg_connect_time = 0 # time of connection request
         self.lag_test = self.lag_end # lag_test is a 'function attribute', like a method.
@@ -219,7 +223,7 @@ class mgClient(mqtt.Client):
         doing a comparison.
         '''
         if self.lag_test():
-            if not self._mg_connected:
+            if not self.mg_connected:
                 try: self.mg_reconnect() # try to reconnect
                 except (OSError, IOError): # still no connection
                     try: raise connectionError('Client can''t reconnect to broker.')
