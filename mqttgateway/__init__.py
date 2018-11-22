@@ -45,5 +45,5 @@ This package has 4 *groups* of files:
 
 '''
 
-__version_info__ = (1, 1, 0)
+__version_info__ = (1, 1, 1)
 __version__ = '.'.join(str(c) for c in __version_info__)
