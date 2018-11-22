@@ -54,8 +54,8 @@ class dummyInterface(object):
         self._msgl_in = msglist_in
         self._msgl_out = msglist_out
 
-        # initialise time for the example only
-        self.time0 = time.time()
+        # initialise time for the example; start 25s earlier so the first loop fires faster
+        self.time0 = time.time() - 25
 
     def loop(self):
         ''' The method called periodically by the main loop.
@@ -67,15 +67,15 @@ class dummyInterface(object):
             msg = self._msgl_in.pull()
             if msg is None: break
             # do something with the message; here we log only
-            LOG.debug(''.join(('Message <', msg.str(), '> received.')))
+            LOG.debug(''.join(('Message <', str(msg), '> received.')))
         # example code to write in the outgoing messages list periodically
         timenow = time.time()
         if (timenow - self.time0) > 30: # every 30 seconds
             msg = mqtt_map.internalMsg(iscmd=True,
-                                       function='DummyFunction',
-                                       gateway='Dummy',
-                                       location='Office',
+                                       function='dummyfunction',
+                                       gateway='dummy',
+                                       location='office',
                                        action='MUTE_ON')
             self._msgl_out.push(msg)
             self.time0 = timenow
-            LOG.debug(''.join(('Message <', msg.str(), '> queued to send.')))
+        return
