@@ -10,6 +10,7 @@ import logging
 import mqttgateway.mqtt_client as mqtt
 import mqttgateway.mqtt_map as mqtt_map
 from mqttgateway.app_properties import AppProperties
+from mqttgateway import __version__
 
 LOG = logging.getLogger(__name__)
 
@@ -79,21 +80,22 @@ def _startgateway(gateway_interface):
                                  AppProperties().get_name(), '.'))}}
 
     log_handler_msg = AppProperties().init_log_handlers(log_data)
-    LOG.info(log_handler_msg)
 
     # Log the configuration used ==================================================================
     LOG.info('=== APPLICATION STARTED ===')
-    LOG.info('Configuration:')
+    LOG.info(''.join(('mqttgateway version: <', __version__, '>.')))
+    LOG.info('Configuration options used:')
     for section in cfg.sections():
         for option in cfg.options(section):
             LOG.info(''.join(('   [', section, '].', option, ' : <',
                               str(cfg.get(section, option)), '>.')))
-
     # Exit in case of error processing the configuration file.
     if cfg.has_section('CONFIG') and cfg.has_option('CONFIG', 'error'):
         LOG.critical(''.join(('Error while processing the configuration file:\n\t',
                               cfg.get('CONFIG', 'error'))))
         raise SystemExit
+    # log configuration of the logger handlers
+    LOG.info(log_handler_msg)
 
     # Instantiate the gateway interface ===========================================================
     # Create the dictionary of the parameters for the interface from the configuration file
@@ -128,8 +130,14 @@ def _startgateway(gateway_interface):
 
     # Initialise the MQTT client and connect ======================================================
 
-    def process_mqttmsg(mqtt_msg): # function that will be called by the on_message MQTT call-back
+    def process_mqttmsg(mqtt_msg):
         ''' Converts a MQTT message into an internal message and pushes it on the message list.
+
+        This function will be called by the on_message MQTT call-back.
+        Placing it here avoids passing the ``messagemap`` and the ``msglist_in`` instances
+        but do not prevent the danger of messing up a multi-threading application.
+        Here if the messagemap is not changed during the application's life (and for now
+        this is not a feature), it should be fine.
 
         Args:
             mqtt_msg (:class:`mqtt.Message`): incoming MQTT message.
@@ -139,7 +147,9 @@ def _startgateway(gateway_interface):
         except ValueError as err:
             LOG.info(str(err))
             return
-        msglist_in.push(internal_msg)
+        # eliminate echo
+        if internal_msg.sender != messagemap.sender():
+            msglist_in.push(internal_msg)
         return
 
     timeout = cfg.getfloat('MQTT', 'timeout') # for the MQTT loop() method
@@ -162,19 +172,24 @@ def _startgateway(gateway_interface):
             except ValueError as err:
                 LOG.info(str(err))
                 continue
-            mqttclient.publish(mqtt_msg.topic, mqtt_msg.payload, qos=0, retain=False)
+            published = mqttclient.publish(mqtt_msg.topic, mqtt_msg.payload, qos=0, retain=False)
+            LOG.debug(''.join(('MQTT message published with (rc, mid): ', str(published),
+                               '\n\t', mqtt.mqttmsg_str(mqtt_msg))))
+        return
 
     # 2018-10-19 Add code to provide multi threading support
     if hasattr(gatewayinterface, 'loop') and callable(gatewayinterface.loop):
+        LOG.info('Mono Thread Loop')
         while True:
             mqttclient.loop_with_reconnect(timeout) # Call the MQTT loop.
             gatewayinterface.loop() # Call the interface loop.
             publish_msglist(block=False, timeout=None)
     else: # assume 'loop_start' is defined and use multi-threading
+        LOG.info('Multi Thread Loop')
         publisher = threading.Thread(target=publish_msglist, name='Publisher',
                                      kwargs={'block': True, 'timeout': None})
         publisher.start()
         mqttclient.loop_start() # Call the MQTT loop.
         gatewayinterface.loop_start() # Call the interface loop.
         block = threading.Event()
-        block.wait() # wait forever - TODO: implement graceful terminations?
+        block.wait() # wait forever - TODO: implement graceful termination
