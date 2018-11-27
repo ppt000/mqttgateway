@@ -75,36 +75,60 @@ If ``pip`` installed correctly the executable files, just launch it from anywher
 
     dummy2mqtt
 
-By default, the process will log messages from all levels into the console.
-It should start logging a banner message to indicate the application has started,
-then a list of the full configuration used.
+Launched without argument, the application looks for a configuration file in the same
+directory as the targeted script with the same name as the application, with a
+*.conf* extension.  In this case, it finds the file ``dummy2mqtt.conf`` inside the
+package folder:
 
-If the MQTT connection is successful it should say so as well as
-displaying the topics to which the application has subscribed.
+.. literalinclude:: ../../mqttgateway/dummy2mqtt.conf
 
-After the start-up phase, the **dummy** interface logs (at a DEBUG level)
-any MQTT messages it receives.  It also emits a unique message every 30 seconds.
-Start your favourite MQTT monitor app (I use the excellent
-`mqtt-spy <https://kamilfb.github.io/mqtt-spy/>`_).
-Connect to your MQTT broker and subscribe to the topic:
+With the configuration provided, the application uses ``test.mosquitto.org`` as MQTT
+broker and will log messages from all levels only into the console.
+
+Once started, the application logs a banner message and the full configuration used.
+Check here that all the options are as intended.
+
+Then the log should show if the MQTT connection was successful and display
+the topics to which the application has subscribed.
+
+After the start-up phase, the **dummy** interface logs any MQTT messages it receives.
+It also emits a unique message every 30 seconds.
+
+Start your a MQTT monitor app (I use `mqtt-spy <https://kamilfb.github.io/mqtt-spy/>`_).
+Connect to your MQTT broker (here it is ``test.mosquitto.org``) and subscribe to the topic:
 
 .. code-block:: none
 
-	home/+/dummy/+/+/+/C
+    testmqttgtw/dummyfunction/#
 
 You should see the messages arriving every 30 seconds in the MQTT monitor,
 as well as in the log.
+
+As the application has subscribed as well to this same topic ``testmqttgtw/dummyfunction/#``,
+it receives back from the broker the same message it just sent, as can be seen in the log.
 
 Publish now a message from the MQTT monitor:
 
 .. code-block:: none
 
-	topic: home/lighting/dummy/office/undefined/me/C
-	payload: LIGHT_ON
+	topic: testmqttgtw/dummyfunction//kitchen//me/C
+	payload: audio_on
 
-You should see in the log that the message has been received
-by the gateway, and that it has been processed correctly, meaning that
-even if it does not do anything, the translation methods have worked.
+You should see in the log that the MQTT message has been received
+by the gateway, and that it has also been processed correctly by the mapping
+processor: a first log indicates that the **MQTT** message has been received by the
+``mqttgateway`` library, a second log indicates that the **internal** message
+has been received by the ``dummy`` interface, with the changed (*mapped*)
+values of the various characteristics.
+
+.. note::
+
+    When the application sends a message with a topic it has subscribed to (as above),
+    it receives it back from the broker, as seen before.  Indeed a log showed that
+    the MQTT message was received by the library.  However, because of a feature that
+    silences *echo* messages (via the ``sender`` characteristic), the library stops
+    the message and does not send it to the ``dummy`` interface.  That is why there is
+    no second log in that case.
 
 The mapping data
 ================
@@ -116,13 +140,13 @@ for each characteristic,
 and its use is only to isolate the internal code from any changes in the MQTT vocabulary.
 
 For the **dummy** interface, the mapping data is provided by the text file
-``dummy_map.json``.  It's just there as an example, and actually is disabled by default.
-To enable it, change the configuration file accordingly and test the mapping with the MQTT
-monitor app.  If you send MQTT messages with MQTT keywords from the mapping file, you should
+``dummy_map.json``.  It's just there as an example and it is enabled in the configuration
+provided.
+If you send MQTT messages with MQTT keywords from the mapping file, you should
 see their *translation* in the logs.
 
-Note that the map file also contains the *root* of the MQTT messages and the topics that the
-interface should subscribe to.
+Note that the map file also contains the *root* of the MQTT messages and the
+topics that the interface should subscribe to.
 
 For more details on the mapping data, go to :doc:`Description <description>`.
 
