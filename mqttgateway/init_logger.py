@@ -61,8 +61,7 @@ _LEVELNAMES = {
     'WARN' : logging.WARNING,
     'WARNING' : logging.WARNING,
     'INFO' : logging.INFO,
-    'DEBUG' : logging.DEBUG,
-    'NOTSET' : logging.NOTSET
+    'DEBUG' : logging.DEBUG
     }
 ''' Dictionary {"level as string": value in the logging library} '''
 
