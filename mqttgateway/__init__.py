@@ -45,5 +45,10 @@ This package has 4 *groups* of files:
 
 '''
 
-__version_info__ = (1, 1, 1)
+import sys
+PY2 = sys.version_info[0]==2
+
+ENCODING = 'utf-8'
+
+__version_info__ = (1, 1, 2)
 __version__ = '.'.join(str(c) for c in __version_info__)
