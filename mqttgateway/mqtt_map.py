@@ -12,15 +12,19 @@ As a reminder, we define the MQTT syntax as follows:
 
 '''
 
-#TODO: Review the tests in **main**
 #TODO: Review position of class TokenMap as a sub-class. Take it out?
 
 from collections import namedtuple
-import Queue
 import json
 import paho.mqtt.client as mqtt
+# PY2
+try:
+    import queue
+except ImportError:
+    import Queue as queue
 
 from mqttgateway.app_properties import AppProperties
+from mqttgateway import ENCODING
 
 class internalMsg(object):
     '''
@@ -63,10 +67,22 @@ class internalMsg(object):
         else: self.action = action
         if arguments is None: self.arguments = {}
         else: self.arguments = arguments
+        return
+
+    def clear(self):
+        ''' Clears all content of the message.'''
+        self.iscmd = False
+        self.function = ''
+        self.gateway = ''
+        self.location = ''
+        self.device = ''
+        self.sender = ''
+        self.action = ''
+        self.arguments = {}
+        return
 
     def copy(self):
         ''' Creates a copy of the message.'''
-        #TODO: use deepcopy()?
         return internalMsg(iscmd=self.iscmd,
                            function=self.function,
                            gateway=self.gateway,
@@ -104,7 +120,7 @@ class internalMsg(object):
         self.arguments['reason'] = reason
         return self
 
-class MsgList(Queue.Queue, object):
+class MsgList(queue.Queue, object):
     ''' Message list to communicate between the library and the interface.
 
     Defined as a Queue list in case the library is used in multi-threading mode.
@@ -143,7 +159,7 @@ class MsgList(Queue.Queue, object):
             timeout (float): wait time if block == True
         '''
         try: item = super(MsgList, self).get(block, timeout)
-        except Queue.Empty: return None
+        except queue.Empty: return None
         super(MsgList, self).task_done()
         return item
 
@@ -206,8 +222,8 @@ class msgMap(object):
                 self.mapfunc = self._mapnone # by default with no maps
                 self.maptype = 'none'
             else:
-                self.i2m_dict = {k: v[0] for k, v in mapdict.iteritems()}
-                self.m2i_dict = {w: k for k, v in mapdict.iteritems() for w in v}
+                self.i2m_dict = {k: v[0] for (k, v) in mapdict.items()}
+                self.m2i_dict = {w: k for (k, v) in mapdict.items() for w in v}
                 if maptype == 'loose':
                     self.mapfunc = self._maploose
                     self.maptype = maptype
@@ -320,26 +336,28 @@ class msgMap(object):
         Raises:
             ValueError: in case of bad MQTT syntax or unrecognised map elements
         '''
+        
 
         # unpack the topic
         tokens = mqtt_msg.topic.split('/')
         if len(tokens) != 7:
             raise ValueError(''.join(('Topic <', mqtt_msg.topic,
                                       '> has not the right number of tokens.')))
-
+        # encode payload in a string, it is a <bytes> in the message
+        payload = mqtt_msg.payload.decode(ENCODING)
         # unpack the arguments if any
         # one of them should be 'action' and goes into mqtt_action
         # the other arguments form a dictionary: m_args
-        if mqtt_msg.payload[0] == '{': # it is a JSON structure
-            try: m_args = json.loads(mqtt_msg.payload)
+        if payload[0] == '{': # it is a JSON structure
+            try: m_args = json.loads(payload)
             except (ValueError, TypeError) as err:
-                raise ValueError(''.join(('Bad format for payload <', mqtt_msg.payload, '>'\
+                raise ValueError(''.join(('Bad format for payload <', payload, '>'\
                                           ' with error:\n\t', str(err))))
             try: mqtt_action = m_args.pop('action')
             except KeyError:
-                raise ValueError(''.join(('No action found in payload <', mqtt_msg.payload, '>')))
+                raise ValueError(''.join(('No action found in payload <', payload, '>')))
         else: # this is a straightforward action
-            mqtt_action = mqtt_msg.payload
+            mqtt_action = payload
             m_args = {}
 
         function = self.maps.function.m2i(tokens[1])
@@ -349,7 +367,7 @@ class msgMap(object):
         sender = self.maps.sender.m2i(tokens[5])
         action = self.maps.action.m2i(mqtt_action)
         i_args = {}
-        for key, value in m_args.iteritems():
+        for (key, value) in m_args.items():
             i_args[self.maps.argkey.m2i(key)] = self.maps.argvalue.m2i(value)
 
         if tokens[6] == 'S': iscmd = False
@@ -390,7 +408,7 @@ class msgMap(object):
         if not mqtt_sender: mqtt_sender = self._sender
         mqtt_action = self.maps.action.i2m(internal_msg.action)
         mqtt_args = {}
-        for key, value in internal_msg.arguments.iteritems():
+        for (key, value) in internal_msg.arguments.items():
             mqtt_args[self.maps.argkey.i2m(key)] = self.maps.argvalue.i2m(value)
         # Generate topic
         topic = '/'.join((self.root, mqtt_function, mqtt_gateway, mqtt_location,
@@ -399,14 +417,14 @@ class msgMap(object):
         if not mqtt_args: # no arguments, just publish the action text on its own
             payload = mqtt_action
         else: # there are arguments, publish them
-            mqtt_args['action'] = mqtt_action
+            if mqtt_action: mqtt_args['action'] = mqtt_action # add action only if not empty
             try: payload = json.dumps(mqtt_args)
             except (ValueError, TypeError) as err:
                 raise ValueError(''.join(('Error serialising arguments:\n\t', str(err))))
 
         mqtt_msg = mqtt.MQTTMessage()
-        mqtt_msg.topic = topic
-        mqtt_msg.payload = payload
+        mqtt_msg.topic = topic.encode('utf-8')
+        mqtt_msg.payload = payload.encode('utf-8')
         mqtt_msg.qos = 0
         mqtt_msg.retain = False
         return mqtt_msg

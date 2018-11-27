@@ -17,7 +17,7 @@ import json
 from mqttgateway.init_logger import initloghandlers
 from mqttgateway.load_config import loadconfig
 
-DEFAULT_CONF_FILENAME = 'default.conf'
+DEFAULT_CONF_FILENAME = u'default.conf'
 
 class AppProperties(object):
     ''' Singleton holding application properties.'''
@@ -25,7 +25,8 @@ class AppProperties(object):
     def __new__(cls, *args, **kwargs):
         # pylint: disable=protected-access
         if not hasattr(cls, 'instance'):
-            cls.instance = super(AppProperties, cls).__new__(cls, *args, **kwargs)
+            #cls.instance = super(AppProperties, cls).__new__(cls, *args, **kwargs) # not for py3
+            cls.instance = super(AppProperties, cls).__new__(cls)
             cls.instance._init_pointer = cls.instance._init_properties
         else:
             cls.instance._init_pointer = cls.instance._dummy
@@ -78,14 +79,13 @@ class AppProperties(object):
         # Process the command line arguments
         self._cmdline_args = parser.parse_args()
         # Find and process configuration file. default.conf should be in the same dir as this file
-        with open(os.path.join(os.path.dirname(__file__), DEFAULT_CONF_FILENAME)) as conf_file:
-            default_config = conf_file.read()
         self._config = None
         config_file_path = self.get_path(self._cmdline_args.config_file.strip(),
                                          extension='.conf',
                                          dft_name=self._name,
                                          dft_dirs=self._directories)
-        self._config = self.load_config(default_config, config_file_path)
+        default_config_path = os.path.join(os.path.dirname(__file__), DEFAULT_CONF_FILENAME)
+        self._config = self.load_config(default_config_path, config_file_path)
         # In this case add the configuration file directory as a default directory as well
         config_file_dir = os.path.dirname(config_file_path)
         self._directories = (config_file_dir, current_working_dir, script_dir)

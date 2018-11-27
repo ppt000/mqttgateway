@@ -5,11 +5,15 @@
 Based on the standard library ConfigParser.
 '''
 
-import ConfigParser
-import io
 import os.path
 
-def loadconfig(cfg_dflt_string, cfg_filepath):
+# PY2
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
+    
+def loadconfig(cfg_dflt_path, cfg_filepath):
     ''' Load the configuration from a file based on a default one.
 
     This function uses the standard library ``ConfigParser``.
@@ -17,7 +21,7 @@ def loadconfig(cfg_dflt_string, cfg_filepath):
     The objective of this function is to provide a mechanism to ensure that all
     the options that are expected by the application are defined and will not need
     to be checked throughout the code.  To achieve that, a default configuration needs
-    to be provided, represented by the string ``cfg_dflt_string`` passed as argument.
+    to be provided, represented by the string ``cfg_dflt_path`` passed as argument.
     This string is expected to have all the necessary
     sections and options that the application will need, with their default
     values.
@@ -48,27 +52,30 @@ def loadconfig(cfg_dflt_string, cfg_filepath):
     same section, if any OS exception occurred while opening or reading the configuration file.
 
     Args:
-        cfg_dflt_string (string): represents the default configuration.
+        cfg_dflt_path (string): represents the default configuration.
         cfg_filepath (string): the path of the configuration file; it is used 'as is'
             and if it is relative there is no guarantee of where it will actually point.
             It is preferrable to send a valid absolute path.
 
     Returns:
-        dict: ``ConfigParser.RawConfigParser`` object loaded with the options of the configuration.
+        dict: ``configparser.ConfigParser`` object loaded with the options of the configuration.
     '''
     # Load the default configuration
-    cfg_dflt = ConfigParser.RawConfigParser(allow_no_value=True)
-    cfg_dflt.readfp(io.BytesIO(cfg_dflt_string)) # should not throw any errors
-    if not cfg_dflt.has_section('CONFIG'):
-        cfg_dflt.add_section('CONFIG')
-    cfg_file = ConfigParser.RawConfigParser()
+    cfg_dflt = configparser.ConfigParser(allow_no_value=True)
+    cfg_dflt.add_section('CONFIG')
+    try:
+        with open(cfg_dflt_path, 'r') as file_handle:
+            cfg_dflt.readfp(file_handle)
+    except (OSError, IOError) as err:
+        raise # TODO: do something else?
+    cfg_file = configparser.ConfigParser()
     try:
         with open(cfg_filepath, 'r') as file_handle:
             cfg_file.readfp(file_handle)
     except (OSError, IOError) as err:
         # 'log' the error in the ConfigParser object
         cfg_dflt.set('CONFIG', 'error', ''.join(('Error <', str(err),
-                                                 '> with log file <', cfg_filepath, '>.')))
+                                                 '> with file <', cfg_filepath, '>.')))
         # return the default configuration as there was a problem reading the file
         return cfg_dflt
     # 'merge' it with the default configuration

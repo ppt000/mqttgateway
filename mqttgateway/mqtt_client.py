@@ -18,6 +18,7 @@ import time
 import paho.mqtt.client as mqtt
 
 import mqttgateway.throttled_exception as thrx
+from mqttgateway import ENCODING
 
 LOG = logging.getLogger(__name__)
 
@@ -44,8 +45,12 @@ class connectionError(thrx.ThrottledException):
 # pylint: disable=unused-argument
 
 def mqttmsg_str(mqttmsg):
-    ''' Returns a string representing the MQTT message object.'''
-    return ''.join(('Topic: <', mqttmsg.topic, '> - Payload: <', mqttmsg.payload, '>.'))
+    ''' Returns a string representing the MQTT message object.
+    
+    As a reminder, the topic is unicode and the payload is binary.
+    '''
+    return ''.join(('Topic: <', mqttmsg.topic,
+                    '> - Payload: <', mqttmsg.payload.decode(ENCODING), '>.'))
 
 def _on_connect(client, userdata, flags, return_code):
     ''' The MQTT callback when a connection is established.
