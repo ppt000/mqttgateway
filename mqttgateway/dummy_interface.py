@@ -67,14 +67,14 @@ class dummyInterface(object):
             msg = self._msgl_in.pull()
             if msg is None: break
             # do something with the message; here we log only
-            LOG.debug(''.join(('Message <', str(msg), '> received.')))
+            LOG.debug(''.join(('Internal message received:\n\t', str(msg))))
         # example code to write in the outgoing messages list periodically
         timenow = time.time()
         if (timenow - self.time0) > 30: # every 30 seconds
             msg = mqtt_map.internalMsg(iscmd=True,
-                                       function='dummyfunction',
-                                       gateway='dummy',
-                                       location='office',
+                                       function='DummyFunction',
+                                       gateway='Dummy',
+                                       location='Office',
                                        action='MUTE_ON')
             self._msgl_out.push(msg)
             self.time0 = timenow
