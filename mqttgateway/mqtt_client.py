@@ -208,7 +208,7 @@ class mgClient(mqtt.Client):
                            ', keepalive: ', str(self._mg_keepalive))))
         try:
             if self._mg_useCredentials:
-              super(mgclient, self).username_pw_set(self._mg_username, self._mg_password)
+              super(mgClient, self).username_pw_set(self._mg_username, self._mg_password)
             super(mgClient, self).connect(self._mg_host, self._mg_port, self._mg_keepalive)
         except (OSError, IOError) as err:
             # the loop will try to reconnect anyway so just log an info
