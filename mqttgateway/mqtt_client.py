@@ -136,15 +136,16 @@ class mgClient(mqtt.Client):
         topics (list of strings): e.g.['home/audiovideo/#', 'home/lighting/#']
         userdata (object): any object that will be passed to the call-backs
     '''
-    def __init__(self, host='localhost', port=1883, keepalive=60, username='username', password='password', client_id='',
+    def __init__(self, host='localhost', port=1883, keepalive=60, useCredentials=0, username=None, password=None, client_id='',
                  on_msg_func=None, topics=None, userdata=None):
         self._mg_host = host
-        self._mg_port = port
-        if username == 'username':
-          self._mg_username = None
-        else:
+        self._mg_port = port        
+        if useCredentials > 0:
+          self._mg.useCredentials = True
           self._mg_username = username
-        self._mg_password = password  
+          self._mg_password = password  
+        else:
+          self._mg_useCredentials = False
         self._mg_keepalive = keepalive
         self._mg_client_id = client_id
         if on_msg_func is None: self.on_msg_func = lambda x: None
@@ -206,6 +207,8 @@ class mgClient(mqtt.Client):
                            ', port: ', str(self._mg_port),
                            ', keepalive: ', str(self._mg_keepalive))))
         try:
+            if self._mg_useCredentials:
+              super(mgclient, self).username_pw_set(self._mg_username, self._mg_password)
             super(mgClient, self).connect(self._mg_host, self._mg_port, self._mg_keepalive)
         except (OSError, IOError) as err:
             # the loop will try to reconnect anyway so just log an info
