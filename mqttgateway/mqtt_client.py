@@ -207,7 +207,8 @@ class mgClient(mqtt.Client):
                            ', port: ', str(self._mg_port),
                            ', keepalive: ', str(self._mg_keepalive))))
         try:
-            if self._mg_useCredentials:
+            if self._mg_useCredentials is True:
+              LOG.info("Log with credentials")
               super(mgClient, self).username_pw_set(self._mg_username, self._mg_password)
             super(mgClient, self).connect(self._mg_host, self._mg_port, self._mg_keepalive)
         except (OSError, IOError) as err:
