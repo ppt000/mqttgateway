@@ -141,7 +141,7 @@ class mgClient(mqtt.Client):
         self._mg_host = host
         self._mg_port = port        
         if useCredentials > 0:
-          self._mg.useCredentials = True
+          self._mg_useCredentials = True
           self._mg_username = username
           self._mg_password = password  
         else:
