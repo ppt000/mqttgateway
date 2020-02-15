@@ -158,7 +158,7 @@ def _startgateway(gateway_interface):
     mqttclient = mqtt.mgClient(host=cfg.get('MQTT', 'host'),
                                port=cfg.getint('MQTT', 'port'),
                                keepalive=cfg.getint('MQTT', 'keepalive'),
-                               useCredentials=cfg.getInt('MQTT', 'useCredentials'),
+                               useCredentials=cfg.getint('MQTT', 'useCredentials'),
                                username=cfg.get('MQTT', 'username'),
                                password=cfg.get('MQTT', 'password'),
                                client_id=client_id,
