@@ -13,7 +13,7 @@ setup(
     version=__version__,
     description='Framework for MQTT Gateways.',
     long_description=long_description,
-    long_description_content_type='text/x-rst',
+    #long_description_content_type='text/x-rst',
     url='http://mqttgateway.readthedocs.io/en/latest/',
     author='Pier Paolo Taddonio',
     author_email='paolo.taddonio@empiluma.com',
