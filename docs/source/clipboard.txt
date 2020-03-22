@@ -1,0 +1,467 @@
+The MQTT representation
+(or naming convention) has obviously to be the same across all applications
+interacting through MQTT.  The purpose of this bridge is to contain all the
+processing of MQTT messages in the class and therefore make the application that
+uses this module (the gateway) agnostic of any changes in the MQTT syntax or in
+the vocabulary used to identify the various concepts (functions, locations,
+actions, etc...).  This module should be used by all the gateways, so that any
+change in this module will be reflected in all gateways.
+
+This abstraction only works if some basic concepts are respected across the
+applications. These are:
+
+    There are 6 parameters that define all types of messages: the function, the
+    gateway, the location, the device, the type (command or status) and the action
+    (or status); out of these, 4 are related to the destination of the message
+    (function, gateway, location, device) and 2 to the content of the message (type
+    and action/status). Finally we can add the source parameter to identify the
+    sender as it might be useful, making a total of 7 parameters.
+
+    In theory only 3 parameters are absolutely necessary: the type (defines the
+    purpose of the message), the location or the device (defines the destination),
+    the action or status (defines the content). Those 3 elements constitute a full
+    'command' or a full 'reply'. Adding the function and/or the gateway helps a lot
+    in filtering the topic, and therefore simplifies the processing of the message
+    downstream, but should not be considered compulsory.
+
+
+
+
+
+Rejected Text
+*************
+
+.. full directory tree
+
+	mqtt_gateways/   (root)
+	\- mqtt_gateways/   (package)
+	   +- __init__.py
+	   +- gateway/
+	   |  +- __init__.py
+	   |  +- mqtt_map.py
+	   |  \- start_gateway.py
+	   |
+	   +- utils/
+	   |  +- __init__.py
+	   |  +- exception_throttled.py
+	   |  +- generate_filepath.py
+	   |  +- init_logger.py
+	   |  \- load_config.py
+	   |
+	   +- dummy/
+	      +- __init__.py
+	      +- dummy_interface.py
+	      +- dummy2mqtt.py
+	      \- data/
+	         +- dummy2mqtt.conf
+	         \- dummy2mqtt.map
+
+
+.. COMMENT
+	*It is not compulsory to name it that way but we will assume to be the case here.*
+
+.. COMMENT out the following paragraph for now
+	Other ways of installing this framework, as a library for example, might be implemented later, but frankly this is not really a library,
+	so I am not sure it should be installed that way.
+	There is a ``setup.py`` file to build distributions and to install them but I have not tested
+	it so far and that's why I have not posted this on PyPI (yet?).  I am not sure either it is necessary anyway.
+
+
+Any gateway should have a name describing the system it is interfacing.  Here it is *dummy* but in reality it will be
+something like *zingcee* or *zonos* for example.
+The gateway will be defined in a package with its own name (here ``dummy``) and will be called as an application as ``dummy2mqtt``
+(or ``zingcee2mqtt`` or ``zonos2mqtt``).  As a consequence, all data files will be called like the application ``dummy2mqtt``
+followed by the relevant extension.
+The gateway package has its own directory (called ``dummy``) under ``mqtt_gatewways``, containing at least 2 modules:
+``dummy_interface.py`` where the ``dummyInterface`` class has to be defined,
+and ``dummy2mqtt.py`` which is the launcher script.
+
+The ''dummyInterface`` class has to define at least 2 methods: the constructor ``__init__()`` and the method ``loop()`` which
+will be called periodically to process the events of the system being interfaced.
+In this case, nothing will be done by these methods.
+
+The ``dummy2mqtt.py`` launcher script is provided as a template, and any new gateway should not need to change much to this script
+in order to make it work.
+
+
+.. old text, keep it for now as a comment
+   A Framework to Build Consistent Gateways to an MQTT Network
+
+
+
+
+Project objective:
+	To facilitate the integration of different
+	proprietary protocols and IoT devices into a MQTT network.
+
+
+- the grammar of the MQTT messages
+
+by creating an abstraction layer that:
+
+* standardises the messages exchanged between the MQTT network and the system being interfaced,
+* defines the syntax and keywords used by the MQTT network.
+
+By using the same abstraction layer across different gateways, the developer is assured that these gateways
+will always communicate properly and that any change in syntax or keywords will only have to be coded once.
+
+This abstraction layer is in essence a library that the developper uses to build its gateways.  However it is constructed as
+a barebone application, or application container, where
+the developer has only to define a class with some minimal requirements to describe and implement its interface, as well as
+some mapping files that relate MQTT keywords with keywords specific to that interface.
+This class is then instantiated and used by the application.
+
+
+.. _installation:
+
+
+: To facilitate the integration of connected devices into a MQTT network
+
+To create a new MQTT gateway:
+...assuming that the name used for the new gateway is 'zork'.
+
+Create a directory 'zork' inside the 'mqtt_gateways' package directory (that also contains the directory 'gateway' for example).
+Inside that directory one should create at least:
+
+- ``__init__.py`` (empty),
+- ``zork2mqtt.py`` (the launcher script, the template provided shoud be enough) and
+- ``zork_interface.py`` (the class defining the new interface, which can be called differently if needed, just remember to change the import in the launcher script though; this is the real code to create).
+
+To run the gateway, and to make sure the imports work, execute the launcher script from the directory above the 'mqtt_gateways' package.
+Use the command::
+
+	python -m mqtt_gateways.zork.zork2mqtt
+
+If launching as a service, make sure the Working Directory is set to be the parent of the 'mqtt_gateways' package.
+
+
+
+
+.. Summary
+
+
+``mqtt_gateways`` is a python wrapper to build consistent gateways to MQTT networks.
+
+What it does:
+
+* it deals with all the boilerplate code to manage an MQTT connection,
+  to load configuration and mapping data, and to create appropriate log handlers,
+* it encapsulates the interface in a class declaration with only 2 methods
+  ``__init__`` and ``loop``,
+* it creates a messaging abstraction layer between the wrapper and the interface,
+* it isolates the syntax and keywords of the MQTT network from the internals of the interface.
+
+.. image:: basic_diagram.png
+   :scale: 50%
+
+
+
+Genesis
+*******
+
+It all started when I realised that `MQTT <http://mqtt.org/>`_
+was a really robust protocol while looking for a reliable way
+to connect the devices in my home.
+I was running an MQTT broker (mosquitto) on a server for a while,
+with some clients subscribing and publishing messages.
+
+As none of my devices were natively MQTT enabled (very few are),
+I needed an interface to translate messages from my devices (or sets
+of devices) to MQTT messages and back.  More importantly, I needed
+this interface to be able to communicate to other interfaces without having to
+re-write code every time I would need to change something. All this is pretty
+much standard stuff in the IoT world.
+
+As I did not find any *simple* tool to do this, I decided to write a re-usable
+abstraction layer to build MQTT gateways.
+
+
+
+Concepts
+********
+
+Without going back to the wheel, I needed to step back and appreciate
+what a message is made of in general, and what messages need
+to do in a domestic IoT environment.  By the way, this frames the target
+audience of this project: it is for domestic use in small networks.
+
+Messages have a source, a destination and a content.  As much as the
+source being present in a message is a 'nice to have', the destination
+and content are pretty much essential, otherwise there is no message.
+An MQTT message has a topic and a payload.  Generally a topic could be
+identified as destination and the payload as content.  In reality,
+the topic carries often more than pure destination information, and this
+makes the MQTT protocol particularly powerful and versatile.
+This is important to keep in mind.
+
+Destination
+-----------
+
+Any 'receiving' MQTT client is a potential destination that needs to subscribe
+to all the topics that could be addressed to it.
+Any 'sender' client needs to address a variety of devices and systems, but
+does not want to be constrained by a very restrictive addressing system,
+where a particular device needs to be addressed with a particular name, or
+worse, with an id that might change each time the device is replaced, for
+example.  Rather, the addressing system needs to be based on real-life concepts
+that are less likely to change with time.  These concepts
+are essentially the characteristics of a device that, taken together,
+define hopefully uniquely that device.
+
+Any message having a combination of these characteristics (but not necessarily
+all of them) shoud be able to address properly a device.
+
+
+MQTT_Gateways
+==================
+A Framework to Build Consistent Gateways to an MQTT Network
+
+Project Objective
+*********************
+Facilitate the integration of different proprietary protocols and devices into an MQTT network
+by creating an abstraction layer that:
+- standardises the messages exchanged between the MQTT network and the system being interfaced,
+- defines the syntax and keywords used by the MQTT network.
+By using the same abstraction layer across different gateways, the developper is assured that these gateways
+will always communicate properly as they share the same code, and that any change in syntax or keywords will
+only have to be coded once.
+
+This abstraction layer is in essence a library that the developper uses to build its gateways, with the particularity
+that it is constructed as a barebone application, or application 'shell', with the entry points already defined and where
+the developer only has to define a class with some minimal requirements to describe and implement its interface, as well as
+some mapping files that relate MQTT keywords with keywords specific to that interface.
+This class is then instantiated and used by the application, where all the MQTT messaging mechanics are already defined.
+
+
+
+
+Installation
+***************
+
+
+Usage
+*******
+
+
+Implementation
+***************
+
+
+
+
+To create a new MQTT gateway:
+...assuming that the name used for the new gateway is 'zork'.
+
+Create a directory 'zork' inside the 'mqtt_gateways' package directory (that also contains the directory 'gateway' for example).
+Inside that directory one should create at least:
+	'__init__.py' (empty),
+	'zork2mqtt.py' (the launcher script, the template provided shoud be enough) and
+	'zork_interface.py' (the class defining the new interface, which can be called differently if needed, just remember to change the import in the launcher script though; this is the real code to create).
+
+To run the gateway, and to make sure the imports work, execute the launcher script from the directory above the 'mqtt_gateways' package.
+Use the command:
+	python -m mqtt_gateways.zork.zork2mqtt
+If launching as a service, make sure the Working Directory is set to be the parent of the 'mqtt_gateways' package.
+
+= Installation - Alternative Method ===============================================================
+
+Alternative download
+--------------------
+
+Another possibility to install this library is to download it as a copy of the
+`github repository <https://github.com/ppt000/mqttgateway>`_ on your machine.
+
+More precisely:
+
+If you use a command-line only linux system:
+
+- change directory to the location you want this application to be.
+  It could go under ``/usr/local/bin/`` for example,
+  or your home directory ``/home/your_username/``.
+  Let's call this directory ``app_dir/`` for future reference.
+
+- download the zipped file from GitHub, unzip it and delete it:
+
+.. code-block:: none
+
+    wget http://github.com/ppt000/mqttgateway/archive/master.zip
+    unzip master.zip
+    rm master.zip
+
+If you use a window system:
+
+- point your browser to `GitHub <https://github.com/ppt000/mqttgateway/tree/master>`_,
+  making sure that you are on the ``master`` branch of the ``mqttgateway`` repository.
+
+- use the **Download Zip** button or menu from that page to download the zipped file.
+
+- Unzip the file into the location you want this application to be, let's call it ``app_dir``.
+
+There is now under ``app_dir/`` a directory called ``mqttgateway_master`` or something similar.
+Inside it, there are all the files needed for the application.
+
+The only non-standard dependency is the `paho.mqtt <https://pypi.python.org/pypi/paho-mqtt>`_ library, which needs to be installed manually it if you do not have it already in your environment, using ``pip`` for example.
+
+
+
+===================================================================================================
+
+The application should be launched from the *root* directory;
+in our case it is the first ``mqtt_gateways`` directory.
+From there, type:
+
+.. code-block:: none
+
+	python -m mqtt_gateways.dummy.dummy2mqtt ../data/
+
+The ``../data/`` argument indicates where the configuration file is.
+
+The application only outputs 1 line to start with:
+it indicates the location of the log file.
+Thereafter it only outputs errors, if any, so if nothing happens
+it is a good sign.  More information can be found in the log file,
+which in our case is located inside the ``data`` directory, as long
+as the configuration file has been used *as is*.
+Let the process run a minute or so and check the log file.
+
+
+=== From tutorial.rst
+
+
+
+A good place to start before coding the interface is to write the map file as it forces to list the
+functionalities that we want to implement.
+
+Here we want the gateway to broadcast the state changes of the bell (1) and the gate release (2),
+as well as open the gate when commanded to (3).  Additionally, we would like the light at the gate to be switched
+on when the gate is opened (4) (this could be done in another application that receives the *gate open* broadcast,
+but it is useful to show how it can be done inside this gateway).  We therefore have the following *events* to model
+with our message characteristics (see :doc:`Concepts <concepts>`).
+
+.. csv-table:: Model
+   :header: "Event", "Function", "Gateway", "Location", "Device", "Type", "Action"
+
+   "Bell Ring", "Security", "entry2mqtt", "gate_entry", "Bell", "Status", "BELL_ON"
+   "Bell End", "Security", "entry2mqtt", "gate_entry", "Bell", "Status", "BELL_OFF"
+   "Gate Open", "Security", "entry2mqtt", "gate_entry", "Gate", "Status", "GATE_OPEN"
+   "Gate Close", "Security", "entry2mqtt", "gate_entry", "Gate", "Status or Command", "GATE_CLOSE"
+   "Light On", "Lighting", "unknown", "gate_entry", "unknown", "Command", "LIGHT_ON"
+   "Light Off", "Lighting", "unknown", "gate_entry", "unknown", "Command", "LIGHT_OFF"
+
+There a few important points to make here:
+
+- The *status* messages sent by this gateway need to be as unequivocal as possible.
+  By having the **Gateway** characteristic set to this gateway name should already
+  make those messages unique.
+- Ideally these messages should also be *overloaded* with information, so that other applications
+  have a range of possibilities for topics to subscribe to, depending of which keywords they happen
+  to know.  In the example above, specifying the **Device** gives an extra layer of identification
+  that is redundant but gives more options for subscription topics.
+- The *command* messages need to embody as much information as possible to ensure they reach
+  their destination.  However here we will assume that we do not know the **Gateway** or the **Device**
+  that operates the lights.  So we only specify the **Function**, the **Location** and the **Action**
+  and *hopefully* the application in charge of the lighting will receive the message and execute
+  the command.
+- by creating this *model*, we are making some choices like defining 2 devices (Bell and Gate) even if
+  in this case we could have defined the whole Entry System as the device, and let the actions
+  indicate to that device what to do (e.g. ``GATE_OPEN``).  Being more specific is probably a
+  better choice.
+
+If this gateway is the first one or if some keywords do not exist, this map file will *create*
+those new keywords in the MQTT vocabulary, and other applications will need to know about them to be
+able to communicate with this gateway.
+
+For the sake of this tutorial, we will use MQTT keywords very similar to the ones used in our model above,
+apart from the fact that all letters are lowercase for the MQTT keywords (it's a choice).
+The only keyword that we will assume already exists is the location corresponding to the gate. Here we
+assume it is already defined as ``frontgarden`` and we will use it for our MQTT equivalent keyword.
+We also need to add the subscription that we will need for our gateway.  Here we only need
+to receive messages that request the gate to be opened.  The topics to subscribe to have to be
+tight enough so that our gateway does not get flooded with messages that are not addressed to it,
+but also loose enough to be flexible and not too tied to a rigorous vocabulary.
+
+
+==============================================================================================
+
+
+Develop your interface
+======================
+
+The interface is made of a class that has to define the 2
+methods ``__init__`` (to initialise the interface) and ``loop``
+(called periodically to do whatever needs to be done to interact
+with the devices), very much like an Arduino script ``setup`` and ``loop`` functions.
+
+The ``loop`` method communicates with the application via 2 lists of
+messages (an incoming and an outgoing one).  It reads the incoming list
+for commands from the MQTT environment and writes into the outgoing list any
+updates on status or commands sent from the devices to the rest of the network.
+
+In the most classic example, a serial interface is the only way to communicate with
+the device.  The ``__init__`` method would initialise the serial port and the
+``loop`` method would write to the serial port any command received from the
+application through the incoming message list, and read the serial port
+for messages from the device to be forwarded to the application.
+
+If needed, a mapping JSON file can store the correspondence between the MQTT
+keywords and the internal keywords.  This feature is available in case the
+MQTT syntax needs to change.
+
+..
+    TODO: include a diagram
+
+
+For a more detailed description of the project, go to :doc:`Project Description <description>`.
+
+
+
+It needs to execute as fast as possible otherwise
+it will block the whole process.  If *really* needed, one could implement separate
+threads here, but most of the time this is overkill.
+
+
+================================================================================================
+
+***********
+DESCRIPTION
+***********
+
+
+This is a more detailed description of the project.
+
+.. image:: projectfiles_overview.png
+   :scale: 50%
+
+.. image:: mainloop_overview.png
+   :scale: 50%
+
+
+The directory structure of the relevant files should look like this:
+
+.. image:: directory_tree.png
+  :scale: 80%
+  :align: center
+
+The core engine of the library is the ``gateway`` sub-package with
+the main module ``start_gateway.py``
+that initialises everything and launches the main loop.
+The ``mqtt_map.py`` module defines a class for internal messages
+and a :class:`MsgMap` class for translation methods between internal
+and MQTT messages.
+These methods rely on mapping data to be provided by the developer
+to be discussed later.
+
+The ``utils`` sub-package is a set of utility functions.
+
+The ``dummy`` sub-package is the first interface.
+It doesn't do anything except helping to check the set-up
+and understand the inner workings of the application.
+
+The ``data`` directory contains all the data files for all the interfaces.
+These are usually the configuration files and the mapping data files.
+
+
+-------------------------------------------------------------------------------
+devices of any type (lights, audio video components,
+security devices, heating, air conditioning, controllers, keypads, etc...)
+-------------------------------------------------------------------------------

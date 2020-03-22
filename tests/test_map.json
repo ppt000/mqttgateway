@@ -1,0 +1,93 @@
+{
+  "function": {
+    "map": {
+      "AudioVideo": [
+        "audiovideo"
+      ],
+      "Lighting": [
+        "lighting"
+      ],
+      "DummyFunction": [
+        "dummyfunction"
+      ]
+    },
+    "maptype": "loose"
+  },
+  "sender": {
+    "maptype": "none"
+  },
+  "topics": [
+    "home/+/dummy/+/+/+/C",
+    "home/audiovideo/+/+/+/+/C"
+  ],
+  "action": {
+    "map": {
+      "POWER_ON": [
+        "audio_on"
+      ],
+      "VOL_UP": [
+        "volume_up"
+      ],
+      "SOURCE_CD": [
+        "source_cd"
+      ],
+      "MUTE_TGL": [
+        "mute_toggle"
+      ],
+      "POWER_OFF": [
+        "audio_off"
+      ],
+      "MUTE_OFF": [
+        "mute_off"
+      ],
+      "MUTE_ON": [
+        "mute_on"
+      ],
+      "VOL_DN": [
+        "volume_down"
+      ],
+      "SOURCE_TUNER": [
+        "source_tuner"
+      ],
+      "LIGHT_OFF": [
+        "light_off"
+      ],
+      "LIGHT_ON": [
+        "light_on"
+      ]
+    },
+    "maptype": "strict"
+  },
+  "location": {
+    "map": {
+      "DiningRm": [
+        "dining_room"
+      ],
+      "Office": [
+        "office"
+      ],
+      "Kitchen": [
+        "kitchen"
+      ]
+    },
+    "maptype": "loose"
+  },
+  "device": {
+    "maptype": "none"
+  },
+  "argvalue": {
+    "maptype": "none"
+  },
+  "root": "home",
+  "gateway": {
+    "map": {
+      "Dummy": [
+        "dummy"
+      ]
+    },
+    "maptype": "strict"
+  },
+  "argkey": {
+    "maptype": "none"
+  }
+}
