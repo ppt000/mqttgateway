@@ -1,20 +1,17 @@
 # -*- coding: utf-8 -*-
-#
 # Configuration file for the Sphinx documentation builder.
-#
+
+''' Paolo - 1 December 2018: This is the best template so far.'''
+
 # This file does only contain a selection of the most common options. For a
 # full list see the documentation:
 # http://www.sphinx-doc.org/en/master/config
 
 # -- Path setup --------------------------------------------------------------
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
 
 import os
 import sys
@@ -40,9 +37,20 @@ release = __version__
 needs_sphinx = '1.7'
 
 # Add any Sphinx extension module names here, as strings.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon'
+    ]
 
-autodoc_member_order = 'bysource'
+# autodoc options
+autoclass_content = 'both' # concatenates the docstrings of the class and the __init__ method
+autodoc_member_order = 'bysource' # keep the order of the source code in the documentation
+autodoc_default_flags = ['members', # include all public members with a docstring
+                         'undoc-members', # include all public members even without a docstring
+                         'private-members', # include also private members
+                         'show-inheritance' # show inheritance of classes
+                         ]
+
 napoleon_google_docstring = True
 
 # Add any paths that contain templates here, relative to this directory.
@@ -67,23 +75,19 @@ language = 'en'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path .
-exclude_patterns = []
+exclude_patterns = ['*.bak']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'monokai'
 
-
 # -- Options for HTML output -------------------------------------------------
-
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
 html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#
 # html_theme_options = {}
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -98,8 +102,9 @@ html_static_path = ['_static']
 # defined by theme itself.  Builtin themes are using these templates by
 # default: ``['localtoc.html', 'relations.html', 'sourcelink.html',
 # 'searchbox.html']``.
-#
-# html_sidebars = {}
+html_sidebars = {
+   '**': ['localtoc.html', 'globaltoc.html', 'relations.html', 'sourcelink.html', 'searchbox.html']
+}
 
 
 # -- Options for HTMLHelp output ---------------------------------------------

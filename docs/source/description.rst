@@ -176,7 +176,7 @@ The **topic** is structured like this:
 
 .. code-block:: none
 
-	root/function/gateway/location/device/source/type
+	root/function/gateway/location/device/sender/type
 
 where ``root`` can be anything the developer wants (``home`` for example)
 and ``type`` can be only ``C`` or ``S``.

@@ -29,21 +29,23 @@ class AppProperties(object):
             cls.instance = super(AppProperties, cls).__new__(cls)
             cls.instance._init_pointer = cls.instance._init_properties
         else:
-            cls.instance._init_pointer = cls.instance._dummy
+            # changed 27Nov2018 from "cls.instance._init_pointer = cls.instance._dummy"
+            cls.instance._init_pointer = lambda *args, **kwargs: None
         # pylint: enable=protected-access
         return cls.instance
 
     def __init__(self, *args, **kwargs):
-        # pylint: disable=no-self-use
+        super(AppProperties, self).__init__() # added 27Nov2018
         self._init_pointer(*args, **kwargs)
-        # pylint: enable=no-self-use
         return
 
-    def _dummy(self, *args, **kwargs):
-        # pylint: disable=unused-argument, no-self-use
-        ''' Method that does nothing.'''
-        # pylint: enable=unused-argument, no-self-use
-        return
+    #== Removed 27Nov2018 ==========================================================================
+    # def _dummy(self, *args, **kwargs):
+    #     # pylint: disable=unused-argument, no-self-use
+    #     ''' Method that does nothing.'''
+    #     # pylint: enable=unused-argument, no-self-use
+    #     return
+    #===============================================================================================
 
     def _init_properties(self, app_path, app_name=None, parse_dict=None):
         ''' Initialisation of the properties.

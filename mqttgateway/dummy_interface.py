@@ -73,7 +73,6 @@ class dummyInterface(object):
         if (timenow - self.time0) > 30: # every 30 seconds
             msg = mqtt_map.internalMsg(iscmd=True,
                                        function='DummyFunction',
-                                       gateway='Dummy',
                                        location='Office',
                                        action='MUTE_ON')
             self._msgl_out.push(msg)

@@ -290,12 +290,14 @@ class msgMap(object):
             Returns:
                 string: converted token
             '''
-            if token is None or token == '': return ''
-            try: return dico[token]
-            except KeyError: raise ValueError(''.join(('Token <', token, '> not found.')))
+            if token is None: token = ''
+            try:
+                return dico[token]
+            except KeyError:
+                raise ValueError(''.join(('Token <', token, '> not found.')))
 
     def __init__(self, jsondict=None):
-        if not jsondict: jsondict = NO_MAP
+        if jsondict is None: jsondict = NO_MAP
         self._sender = AppProperties().get_name()
         try: self.root = jsondict['root']
         except KeyError: raise ValueError('JSON dictionary has no key <root>.')
@@ -336,7 +338,6 @@ class msgMap(object):
         Raises:
             ValueError: in case of bad MQTT syntax or unrecognised map elements
         '''
-        
 
         # unpack the topic
         tokens = mqtt_msg.topic.split('/')

@@ -70,8 +70,8 @@ def _startgateway(gateway_interface):
         'file':
             {'level': cfg.get('LOG', 'filelevel'),
              'path': logfilepath,
-             'number': cfg.get('LOG', 'filenum'),
-             'size': cfg.get('LOG', 'filesize')},
+             'number': cfg.getint('LOG', 'filenum'),
+             'size': cfg.getint('LOG', 'filesize')},
         'email':
             {'host': cfg.get('LOG', 'emailhost'),
              'port': cfg.get('LOG', 'emailport'),

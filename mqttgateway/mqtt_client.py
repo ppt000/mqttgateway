@@ -111,7 +111,7 @@ def _on_message(client, userdata, mqtt_msg):
     execute it later.
     '''
     LOG.debug(''.join(('MQTT message received:\n\t', mqttmsg_str(mqtt_msg))))
-    client.on_msg_func(mqtt_msg)
+    userdata['mgClient'].on_msg_func(mqtt_msg)
     return
 
 # pylint: enable=unused-argument
@@ -148,14 +148,17 @@ class mgClient(mqtt.Client):
         self.mg_topics = [] # list of tuples (topic, qos)
         for topic in topics:
             self.mg_topics.append((topic, 0))
-        self._mg_userdata = userdata
+        self._mg_userdata = {}
+        self._mg_userdata['mgClient'] = self
+        self._mg_userdata['userdata'] = userdata # even if it is None, at least the key exists
         self.mg_connected = False
 
         self._mg_connect_time = 0 # time of connection request
         self.lag_test = self.lag_end # lag_test is a 'function attribute', like a method.
 
         super(mgClient, self).__init__(client_id=client_id, clean_session=True,
-                                       userdata=userdata, protocol=mqtt.MQTTv311, transport='tcp')
+                                       userdata=self._mg_userdata,
+                                       protocol=mqtt.MQTTv311, transport='tcp')
         self.on_connect = _on_connect
         self.on_disconnect = _on_disconnect
         self.on_message = _on_message
