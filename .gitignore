@@ -103,3 +103,5 @@ ENV/
 /ref/
 /.project
 /.pydevproject
+
+/notebooks
