@@ -14,6 +14,8 @@ As a reminder, we define the MQTT syntax as follows:
 
 #TODO: Review position of class TokenMap as a sub-class. Take it out?
 
+import logging
+
 from collections import namedtuple
 import json
 import paho.mqtt.client as mqtt
@@ -26,6 +28,8 @@ except ImportError:
 from mqttgateway.app_properties import AppProperties
 from mqttgateway import ENCODING
 
+LOG = logging.getLogger(__name__)
+
 class internalMsg(object):
     '''
     Defines all the characteristics of an internal message.
@@ -37,6 +41,8 @@ class internalMsg(object):
         for example, an empty string could still be mapped to an existing internal value,
         as if it was a default, but that is not the case here.
         Therefore ``None`` values are always converted to empty strings.
+
+    TODO: implement smart retrieval of arguments with key checks
 
     Args:
         iscmd (bool): Indicates if the message is a command (True) or a status (False)
@@ -92,6 +98,14 @@ class internalMsg(object):
                            action=self.action,
                            arguments=self.arguments.copy())
 
+    def argument(self, arg, raises=False, default=None):
+        ''' Return the argument if found in the arguments dictionary.'''
+        try: return self.arguments[arg]
+        except KeyError:
+            if raises: raise ValueError('Argument {} not found in arguments dictionary'.format(arg))
+            LOG.warning('Argument %s not found in arguments dictionary')
+            return default
+
     def __str__(self):
         ''' Stringifies the instance content.'''
         return ' - '.join(('type=' + 'C' if self.iscmd else 'S',
@@ -145,7 +159,9 @@ class MsgList(queue.Queue, object):
             block (boolean): in case the list is full
             timeout (float): wait time if block == True
         '''
+        #LOG.debug('Queue size before push is %d', super().qsize())
         super(MsgList, self).put(item, block, timeout)
+        #LOG.debug('Queue size after push is %d', super().qsize())
 
     def pull(self, block=False, timeout=None):
         ''' Pull the first item from the list.
@@ -160,6 +176,7 @@ class MsgList(queue.Queue, object):
         '''
         try: item = super(MsgList, self).get(block, timeout)
         except queue.Empty: return None
+        #LOG.debug('Queue size after pull is %d', super().qsize())
         super(MsgList, self).task_done()
         return item
 
