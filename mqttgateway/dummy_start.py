@@ -18,10 +18,10 @@ import logging
 # import the class for all the application properties. **DO NOT CHANGE THIS **
 from mqttgateway.app_properties import AppProperties
 # import the module that initiates and starts the gateway. ** DO NOT CHANGE THIS **
-import mqttgateway.start_gateway as start_g
+from mqttgateway.start_gateway import startgateway
 
 # import the module representing the interface ** CHANGE TO YOUR IMPORT HERE **
-import mqttgateway.dummy_interface as dummy_i
+from mqttgateway.dummy_interface import dummyInterface
 
 PACKAGE_NAME = 'dummy2mqtt' # the actual name of this python package
 # ** HERE THE PACKAGE IS THE SAME AS THE LIBRARY, SO IT IS NOT 'dummy2mqtt' BUT YOUR PACKAGE
@@ -33,11 +33,11 @@ def main():
     ''' The entry point for the application '''
 
     # Initialise the application properties. ** NO NEED TO CHANGE ANYTHING HERE **
-    AppProperties(__file__, app_name=APP_NAME)
+    app = AppProperties(__file__, app_name=APP_NAME)
 
     # Register the mqttgateway logger to use the library handlers.
     # ** KEEP THIS IF YOU WANT THE LOGS FROM THE LIBRARY IN YOUR APPLICATION **
-    AppProperties().register_logger(logging.getLogger('mqttgateway'))
+    app.add_handlers(logging.getLogger(PACKAGE_NAME))
 
     # Register your own package logger to use the library handlers.
     # ** HERE IT IS NOT NEEDED BECAUSE WE ARE IN THE SAME PACKAGE BUT FOR YOUR APPLICATION
@@ -45,7 +45,7 @@ def main():
     #AppProperties().register_logger(logging.getLogger(PACKAGE_NAME))
 
     # launch the gateway ** CHANGE TO YOUR CLASS CALL HERE **
-    start_g.startgateway(dummy_i.dummyInterface)
+    startgateway(dummyInterface)
 
 if __name__ == '__main__':
     main()

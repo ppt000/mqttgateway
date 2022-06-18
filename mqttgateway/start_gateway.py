@@ -16,7 +16,7 @@ LOG = logging.getLogger(__name__)
 
 def startgateway(gateway_interface):
     ''' Entry point.'''
-    AppProperties(app_path=__file__, app_name='mqttgateway') # does nothing if already been called
+    #AppProperties(app_path=__file__, app_name='mqttgateway') # does nothing if already been called
     try:
         _startgateway(gateway_interface)
     except:
@@ -56,30 +56,7 @@ def _startgateway(gateway_interface):
     '''
 
     # Load the configuration ======================================================================
-    cfg = AppProperties().get_config()
-
-    # Initialise the logger handlers ==============================================================
-    logfilename = cfg.get('LOG', 'logfilename')
-    if not logfilename: logfilepath = None
-    else: logfilepath = AppProperties().get_path(logfilename, extension='.log')
-
-    # create the dictionary of log configuration data for the initlogger
-    log_data = {
-        'console':
-            {'level': cfg.get('LOG', 'consolelevel')},
-        'file':
-            {'level': cfg.get('LOG', 'filelevel'),
-             'path': logfilepath,
-             'number': cfg.getint('LOG', 'filenum'),
-             'size': cfg.getint('LOG', 'filesize')},
-        'email':
-            {'host': cfg.get('LOG', 'emailhost'),
-             'port': cfg.get('LOG', 'emailport'),
-             'address': cfg.get('LOG', 'emailaddress'),
-             'subject': ''.join(('Error message from application ',
-                                 AppProperties().get_name(), '.'))}}
-
-    log_handler_msg = AppProperties().init_log_handlers(log_data)
+    cfg = AppProperties().config
 
     # Log the configuration used ==================================================================
     LOG.info('=== APPLICATION STARTED ===')
@@ -94,8 +71,6 @@ def _startgateway(gateway_interface):
         LOG.critical(''.join(('Error while processing the configuration file:\n\t',
                               cfg.get('CONFIG', 'error'))))
         raise SystemExit
-    # log configuration of the logger handlers
-    LOG.info(log_handler_msg)
 
     # Instantiate the gateway interface ===========================================================
     # Create the dictionary of the parameters for the interface from the configuration file
@@ -154,7 +129,7 @@ def _startgateway(gateway_interface):
 
     timeout = cfg.getfloat('MQTT', 'timeout') # for the MQTT loop() method
     client_id = cfg.get('MQTT', 'clientid')
-    if not client_id: client_id = AppProperties().get_name()
+    if not client_id: client_id = AppProperties().name
     mqttclient = mqtt.mgClient(host=cfg.get('MQTT', 'host'),
                                port=cfg.getint('MQTT', 'port'),
                                keepalive=cfg.getint('MQTT', 'keepalive'),

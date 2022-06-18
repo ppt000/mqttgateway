@@ -23,16 +23,11 @@ setup(
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Embedded Systems',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7'        
+        'Programming Language :: Python :: 3.9'
         ],
     keywords='mqtt gateway',
     packages=['mqttgateway'],#find_packages(),
-    install_requires=['paho-mqtt >= 1.4.0'],
+    install_requires=['paho-mqtt >= 1.6.1'],
     package_data={'': ['*.conf', '*.json']},
     entry_points={'console_scripts': ['dummy2mqtt = mqttgateway.dummy_start:main']}
 )

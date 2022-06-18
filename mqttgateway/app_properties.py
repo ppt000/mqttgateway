@@ -9,91 +9,198 @@ are only updated at the first instantiation and are never changed again.
 The attributes are only accessible with getters and there are no setters.
 '''
 
+import sys
 import logging
+import logging.handlers
 import os.path
 import argparse
 import json
+from pathlib import Path
+from typing import Union
+import configparser
 
-from mqttgateway.init_logger import initloghandlers
-from mqttgateway.load_config import loadconfig
+from mqttgateway import ENCODING, LIBRARY_NAME
 
-DEFAULT_CONF_FILENAME = u'default.conf'
+DEFAULT_CONF_FILENAME = 'defaults.cfg'
 
-class AppProperties(object):
+MQTTGTW_DIR = Path(r'~/.mqttgtw').expanduser()
+assert MQTTGTW_DIR.is_dir(), f"The path <*home*/.mqttgtw> does not exist or is not a directory."
+
+LOG_DIR = MQTTGTW_DIR.joinpath('logs')
+
+_LEVELNAMES = {
+    'CRITICAL' : logging.CRITICAL,
+    'ERROR' : logging.ERROR,
+    'WARN' : logging.WARNING,
+    'WARNING' : logging.WARNING,
+    'INFO' : logging.INFO,
+    'DEBUG' : logging.DEBUG,
+    'NONE' : None
+    }
+''' Dictionary {"level as string": value in the logging library} '''
+
+# Formatters
+_FORMAT_NO_DATE = '%(module)s.%(lineno)d-%(funcName)s '\
+                  '%(threadName)s %(levelname)s: %(message)s'
+_FORMATTER_NO_DATE = logging.Formatter(fmt=_FORMAT_NO_DATE)
+
+_FORMAT_LONG = '%(asctime)s %(module)-20s.%(lineno)04d-%(funcName)-20s '\
+               '%(threadName)-10s %(levelname)-8s:\n\t%(message)s'
+_FORMATTER_LONG = logging.Formatter(_FORMAT_LONG)
+
+_FORMAT_SHORT = '%(asctime)s.%(msecs)03d %(module)-15s %(lineno)4d %(funcName)-15s '\
+                '%(threadName)-10s %(levelname)-8s: %(message)s'
+_FORMATTER_SHORT = logging.Formatter(_FORMAT_SHORT, datefmt="%H%M%S")
+
+class AppProperties:
     ''' Singleton holding application properties.'''
 
-    def __new__(cls, *args, **kwargs):
-        # pylint: disable=protected-access
-        if not hasattr(cls, 'instance'):
-            #cls.instance = super(AppProperties, cls).__new__(cls, *args, **kwargs) # not for py3
-            cls.instance = super(AppProperties, cls).__new__(cls)
-            cls.instance._init_pointer = cls.instance._init_properties
+    def __new__(cls, *args, **kwargs): # pylint: disable=protected-access, unused-argument
+        if not hasattr(cls, 'singleton'):
+            cls.singleton = super(AppProperties, cls).__new__(cls)
+            cls.singleton._init_pointer = cls.singleton._init_singleton
         else:
-            # changed 27Nov2018 from "cls.instance._init_pointer = cls.instance._dummy"
-            cls.instance._init_pointer = lambda *args, **kwargs: None
-        # pylint: enable=protected-access
-        return cls.instance
+            cls.singleton._init_pointer = lambda *args, **kwargs: None
+        return cls.singleton
 
     def __init__(self, *args, **kwargs):
-        super(AppProperties, self).__init__() # added 27Nov2018
-        self._init_pointer(*args, **kwargs)
+        super().__init__()
+        self._init_pointer(*args, **kwargs) #pylint: disable=no-member
         return
 
-    #== Removed 27Nov2018 ==========================================================================
-    # def _dummy(self, *args, **kwargs):
-    #     # pylint: disable=unused-argument, no-self-use
-    #     ''' Method that does nothing.'''
-    #     # pylint: enable=unused-argument, no-self-use
-    #     return
-    #===============================================================================================
-
-    def _init_properties(self, app_path, app_name=None, parse_dict=None):
+    def _init_singleton(self, app_path: Union[str, Path], app_name: str=None):
         ''' Initialisation of the properties.
 
         This is effectively the constructor of the class.
         At first instantiation of this singleton, the ``__init__`` method points to
         this method.
-        For the following instantiations, the ``__init__`` method points to
-        the ``_dummy`` function.
+        For the following instantiations, the ``__init__`` method points to a dummy
+        lambda function.
 
         Args:
             app_path (string): the full path of the launching script, including filename
             app_name (string): the application name if different from the filename
-            parse_dict (dict): not implemented
          '''
 
-        # Define some default directories used throughout
-        script_dir = os.path.realpath(os.path.dirname(app_path)) # full path of app_path
-        current_working_dir = os.getcwd()
-        self._directories = (current_working_dir, script_dir)
+        # pylint: disable=attribute-defined-outside-init
+        try:
+            app_path = Path(app_path).resolve(strict=True)
+        except FileNotFoundError as exc:
+            raise RuntimeError(f"The path <{app_path}> provided"
+                               f"for this application does not exist") from exc
+
         # Compute app_name from app_path, if not available
-        if not app_name:
-            app_name = os.path.splitext(os.path.basename(app_path))[0] # filename without extension
-        self._name = app_name
+        self._name = app_name if app_name is not None else app_path.stem
+
+        # Define default directories
+        self._directories = [Path.home(), Path.cwd(), app_path.parent]
+
         # Configure the parser for the command line arguments
         parser = argparse.ArgumentParser(description=self._name)
-        parser.add_argument('-c', '--conf', help='provide the path to the configuration file',
-                            dest='config_file', default='')
-        # Add the user arguments to the parser, if any
-        if parse_dict:
-            # TODO: to implement
-            pass
-        # Process the command line arguments
+        parser.add_argument('-c', '--cfg', help='provide the path to the configuration file',
+                            dest='cfg_file', default=self._name + '.cfg')
+        parser.add_argument('-m', '--map', help='provide the path to the mapping file',
+                            dest='map_file', default=self._name + '.map')
+        parser.add_argument('-q', '--mqtt', help='use provide the path to the mapping file',
+                            dest='map_file', default=self._name + '.map')
         self._cmdline_args = parser.parse_args()
-        # Find and process configuration file. default.conf should be in the same dir as this file
-        self._config = None
-        config_file_path = self.get_path(self._cmdline_args.config_file.strip(),
-                                         extension='.conf',
-                                         dft_name=self._name,
-                                         dft_dirs=self._directories)
-        default_config_path = os.path.join(os.path.dirname(__file__), DEFAULT_CONF_FILENAME)
-        self._config = self.load_config(default_config_path, config_file_path)
-        # In this case add the configuration file directory as a default directory as well
-        config_file_dir = os.path.dirname(config_file_path)
-        self._directories = (config_file_dir, current_working_dir, script_dir)
+
+        # Find and process configuration file. The default should be in the same dir as this file
+        # currently the configuration file is expected in `~/.mqttgtw`
+        self._config = configparser.ConfigParser()
+        with open(Path(app_path.parent, DEFAULT_CONF_FILENAME),
+                  mode='rt', encoding=ENCODING) as infile:
+            self._config.read_file(infile)
+        del infile
+        cfg_file = MQTTGTW_DIR.joinpath(self._cmdline_args.cfg_file)
+        cfg_lst = self._config.read(cfg_file, encoding=ENCODING)
+        if not cfg_lst:
+            raise RuntimeError(f"Config file <> not found.")
+        self._directories.append(cfg_lst[0])
+
         # Declare log attributes
         self._log_handlers = []
-        self._loggers = []
+
+        warnings = [] # errors and warnings to store before logging is configured.
+        log_cfg = self._config['LOG']
+
+        # create the stream handler to stderr. It should always work.
+        stream_handler = logging.StreamHandler(sys.stderr)
+        stream_handler.setLevel(logging.WARN)
+        stream_handler.setFormatter(_FORMATTER_NO_DATE) # normally the timestamp is added anyway
+        self._log_handlers.append(stream_handler)
+
+        # create the console handler
+        try:
+            console_level = _LEVELNAMES[log_cfg['consolelevel']]
+        except (KeyError, IndexError) as err:
+            warnings.append(f"Config item <consolelevel> has an unrecognised"
+                            f" value <{log_cfg['consolelevel']}>.")
+            console_level = None
+        if console_level is not None:
+            cons_handler = logging.StreamHandler(sys.stdout)
+            cons_handler.setLevel(console_level)
+            cons_handler.setFormatter(_FORMATTER_SHORT)
+            self._log_handlers.append(cons_handler)
+
+        # create the file handler
+        try:
+            file_level = _LEVELNAMES[log_cfg['filelevel']]
+        except (KeyError, IndexError) as err:
+            warnings.append(f"Config item <filelevel> has an unrecognised"
+                            f" value <{log_cfg['filelevel']}>.")
+            file_level = None
+        if file_level is not None:
+            # create the sub-directory for the logs in case it does not exist yet
+            LOG_DIR.mkdir(exist_ok=True)
+            filename = LOG_DIR.joinpath(self._name + '.log')
+            try:
+                file_handler = logging.handlers.\
+                RotatingFileHandler(filename=filename,
+                                    mode='a',
+                                    maxBytes=int(log_cfg['filesize']),
+                                    backupCount=int(log_cfg['filenum']))
+            except (OSError, IOError) as err: # there was a problem with the file
+                warnings.append(''.join(('No file log configured. Reason: ', str(err), '.')))
+            else:
+                file_handler.setLevel(file_level)
+                file_handler.setFormatter(_FORMATTER_LONG)
+                self._log_handlers.append(file_handler)
+
+        # create the journald handler
+        # TODO: do it!
+
+        lib_logger = logging.getLogger(LIBRARY_NAME)
+        for handler in self._log_handlers:
+            lib_logger.addHandler(handler)
+
+        for warning in warnings:
+            lib_logger.warning(warning)
+
+        lib_logger.setLevel(logging.DEBUG)
+        lib_logger.info('App initialised succesfully')
+
+        return
+
+    @property
+    def name(self) -> str:
+        ''' The name of the application.'''
+        return self._name
+
+    @property
+    def cmdline_args(self) -> dict:
+        ''' Command line arguments as dict.'''
+        return self._cmdline_args
+
+    @property
+    def config(self) -> dict:
+        ''' Configuration as dict.'''
+        return self._config
+
+    def add_handlers(self, logger: logging.Logger) -> None:
+        ''' Add all the library handlers to the logger.'''
+        for handler in self._log_handlers:
+            logger.addHandler(handler)
 
     def get_path(self, path_given, extension=None, dft_name=None, dft_dirs=None):
         ''' Returns the absolute path of a file based on defined rules.
@@ -138,30 +245,6 @@ class AppProperties(object):
                 if os.path.exists(pth): return pth
             return paths[0] # even if it will fail, return the first path in the list
 
-    def get_file(self, path_given, extension=None, dft_name=None, dft_dirs=None):
-        ''' Returns the content of the file defined by the arguments.
-
-        This method uses the :py:meth:`get_path`
-        to determine the file sought.
-        All the usual exceptions are raised in case of problems.
-        It is assumed the content of the file is text and that the size is small
-        enough to be returned at once.
-        The arguments are the same as :py:meth:`get_path`.
-
-        Args:
-            path_given (string): any type pf path; see rules
-            extension (string): the default extension of the file
-            dft_name (string): the default name to be used, usually the application name
-            dft_dirs (list of strings): the default directories where to look for the file
-
-        Returns:
-            string: the full content of the file.
-        '''
-        file_path = self.get_path(path_given, extension, dft_name, dft_dirs)
-        with open(file_path, 'r') as file_handler:
-            file_data = file_handler.read()
-        return file_data
-
     def get_jsonfile(self, path_given, extension=None, dft_name=None, dft_dirs=None):
         ''' Returns a dictionary with the content of the JSON file defined by the arguments.
 
@@ -184,12 +267,7 @@ class AppProperties(object):
             json_dict = json.load(file_handler)
         return json_dict
 
-    def load_config(self, cfg_dflt_string, cfg_filepath):
-        # pylint: disable=no-self-use
-        ''' See :py:meth:`loadconfig <mqttgateway.load_config.loadconfig>` for documentation.'''
-        # pylint: enable=no-self-use
-        return loadconfig(cfg_dflt_string, cfg_filepath)
-
+    """
     def init_log_handlers(self, log_data):
         ''' Creates new handlers from log_data and add the new ones to the log handlers list.
 
@@ -211,6 +289,7 @@ class AppProperties(object):
                     if handler not in logger.handlers:
                         logger.addHandler(handler)
         return msg # TODO: the message will be incorrect if there are duplicate handlers.
+    """
 
     def register_logger(self, logger):
         ''' Register the logger and add the existing handlers to it.
@@ -230,48 +309,8 @@ class AppProperties(object):
                 logger.addHandler(handler)
         return
 
-    def get_name(self):
-        ''' Name getter.
-
-        Returns:
-            string: the name of the application.
-        '''
-        return self._name
-
-    def get_directories(self):
-        ''' Directories getter.
-
-        The relevant directories of the application are computed and stored at once
-        at the launch of the application.  If they have been deleted, moved or their name
-        is changed while the application is running, they will not be valid anymore.
-
-        The relevant directories are the current working directory, the directory of
-        the launching script and the directory where the configuration file was found
-        (which could be different from the first 2 because of the option to provide it in
-        the command line).
-
-        Returns:
-            list: a list of full paths of relevant directories for the application.
-        '''
-        return self._directories
-
-    def get_cmdline_args(self):
-        ''' Command line arguments getter.
-
-        Returns:
-            dict: the dictionary returned by ``parser.parse_args()``.
-
-        '''
-        return self._cmdline_args
-
-    def get_config(self):
-        ''' Configuration getter.
-
-        Returns:
-            dict: the dictionary returned by ``ConfigParser.RawConfigParser()``
-
-        '''
-        return self._config
-
 if __name__ == '__main__':
-    pass
+    app = AppProperties(__file__)
+    print(app.name)
+    print(app.cmdline_args)
+    app.config.write(sys.stdout)

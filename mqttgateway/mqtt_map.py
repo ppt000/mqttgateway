@@ -315,7 +315,7 @@ class msgMap(object):
 
     def __init__(self, jsondict=None):
         if jsondict is None: jsondict = NO_MAP
-        self._sender = AppProperties().get_name()
+        self._sender = AppProperties().name
         try: self.root = jsondict['root']
         except KeyError: raise ValueError('JSON dictionary has no key <root>.')
         try: self.topics = jsondict['topics']

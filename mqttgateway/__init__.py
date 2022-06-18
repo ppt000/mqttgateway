@@ -45,10 +45,10 @@ This package has 4 *groups* of files:
 
 '''
 
-import sys
-PY2 = sys.version_info[0]==2
+#import sys
+#PY2 = sys.version_info[0]==2
 
 ENCODING = 'utf-8'
+LIBRARY_NAME = 'mqttgateway'
 
-__version_info__ = (1, 1, 5)
-__version__ = '.'.join(str(c) for c in __version_info__)
+__version__ = '2.0.0'
