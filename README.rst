@@ -3,9 +3,9 @@
 .. old text
   Full documentation is `here <http://mqttgateway.readthedocs.io/>`_.
 
-.. admonition:: After a 2 years pause, it's finally back... 
-
 **⚠ After a 2 years pause, it's finally back... 😀**
+
+I am working on the new version.
  
 ######################
 Welcome to mqttgateway
