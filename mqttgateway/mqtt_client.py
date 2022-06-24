@@ -1,9 +1,9 @@
 ''' This is a child class of the MQTT client class of the PAHO library.
 
-.. Reviewed 11 November 2018.
+.. Reviewed 20jun22
 
 It includes the management of reconnection when using only the ``loop()`` method,
-which is not included natively in the current PAHO library.
+which is not included natively in the PAHO library as of 2018.
 
 Notes on MQTT behaviour:
 
@@ -11,14 +11,15 @@ Notes on MQTT behaviour:
   but raise no errors either.
 - the ``loop`` method handles always only one message per call.
 
+TODO: Review callbacks arguments types.
 '''
 
 import logging
 import time
 import paho.mqtt.client as mqtt
 
-import mqttgateway.throttled_exception as thrx
 from mqttgateway import ENCODING
+from mqttgateway.mqtt_map import internalMsg
 
 LOG = logging.getLogger(__name__)
 
@@ -32,89 +33,8 @@ _MQTT_RC = { # Response codes
        # 6-255: Currently unused.
     }
 
-_THROTTLELAG = 600  # lag in seconds to throttle the error logs.
+_THROTTLELAG = 60  # lag in seconds to throttle the error logs.
 _RACELAG = 0.5 # lag in seconds to wait before testing the connection state
-
-class connectionError(thrx.ThrottledException):
-    # pylint: disable=too-few-public-methods
-    ''' Base Exception class for this module, inherits from ThrottledException'''
-    # pylint: enable=too-few-public-methods
-    def __init__(self, msg=None):
-        super(connectionError, self).__init__(msg, throttlelag=_THROTTLELAG, module_name=__name__)
-
-# pylint: disable=unused-argument
-
-def mqttmsg_str(mqttmsg):
-    ''' Returns a string representing the MQTT message object.
-    
-    As a reminder, the topic is unicode and the payload is binary.
-    '''
-    return ''.join(('Topic: <', mqttmsg.topic,
-                    '> - Payload: <', mqttmsg.payload.decode(ENCODING), '>.'))
-
-def _on_connect(client, userdata, flags, return_code):
-    ''' The MQTT callback when a connection is established.
-
-    It sets to True the ``connected`` attribute and subscribes to the
-    topics available in the message map.
-
-    As a reminder, the ``flags`` argument is a dictionary with at least
-    the key ``session present`` (with a space!) which will be 1 if the session
-    is already present.
-    '''
-    try: session_present = flags['session present']
-    except KeyError: session_present = 'Info Not Available'
-    LOG.debug(''.join(('Session Present flag :', str(session_present), '.')))
-    if return_code != 0: # failed
-        LOG.info(''.join(('Connection failed with result code <',
-                          str(return_code), '>: ', _MQTT_RC[return_code], '.')))
-        return
-    LOG.info(''.join(('Connected! Result message: ', _MQTT_RC[return_code], '.')))
-    client.mg_connected = True
-    try:
-        (result, mid) = client.subscribe(client.mg_topics)
-    except ValueError as err:
-        LOG.info(''.join(('Topic subscription error:\n\t', repr(err))))
-    else:
-        if result == mqtt.MQTT_ERR_NO_CONN:
-            LOG.info('Attempt to subscribe without connection.')
-        elif result != mqtt.MQTT_ERR_SUCCESS:
-            LOG.info(''.join(('Unrecognised result <', str(result), '> during subscription.')))
-        else:
-            LOG.debug(''.join(('Message id <', str(mid),
-                               '>: subscriptions successful to list of (topics, qos):\n\t',
-                               str(client.mg_topics))))
-    return
-
-def _on_subscribe(client, userdata, mid, granted_qos):
-    ''' The MQTT callback when a subscription is completed.
-
-    Only implemented for debug purposes.
-    '''
-    LOG.debug(''.join(('Subscription id <', str(mid),
-                       '> with (list of) qos ', str(granted_qos), '.')))
-    return
-
-def _on_disconnect(client, userdata, return_code):
-    ''' The MQTT callback when a disconnection occurs.
-
-    It sets to False the ``mg_connected`` attribute.
-    '''
-    LOG.info(''.join(('Client has disconnected with code <', str(return_code), '>.')))
-    client.mg_connected = False
-
-def _on_message(client, userdata, mqtt_msg):
-    ''' The MQTT callback when a message is received from the MQTT broker.
-
-    The message (topic and payload) is mapped into its internal representation and
-    then appended to the incoming message list for the gateway interface to
-    execute it later.
-    '''
-    LOG.debug(''.join(('MQTT message received:\n\t', mqttmsg_str(mqtt_msg))))
-    userdata['mgClient'].on_msg_func(mqtt_msg)
-    return
-
-# pylint: enable=unused-argument
 
 class mgClient(mqtt.Client):
     ''' Class representing the MQTT connection. ``mg`` means ``MqttGateway``.
@@ -136,8 +56,10 @@ class mgClient(mqtt.Client):
         topics (list of strings): e.g.['home/audiovideo/#', 'home/lighting/#']
         userdata (object): any object that will be passed to the call-backs
     '''
-    def __init__(self, host='localhost', port=1883, keepalive=60, client_id='',
-                 on_msg_func=None, topics=None, userdata=None):
+
+    def __init__(self, host: str='localhost', port: int=1883, keepalive: int=60,
+                 client_id: str='', on_msg_func: callable=None,
+                 topics: list=None, userdata: any=None):
         self._mg_host = host
         self._mg_port = port
         self._mg_keepalive = keepalive
@@ -156,16 +78,18 @@ class mgClient(mqtt.Client):
         self._mg_connect_time = 0 # time of connection request
         self.lag_test = self.lag_end # lag_test is a 'function attribute', like a method.
 
-        super(mgClient, self).__init__(client_id=client_id, clean_session=True,
-                                       userdata=self._mg_userdata,
-                                       protocol=mqtt.MQTTv311, transport='tcp')
+        super().__init__(client_id=client_id, clean_session=True,
+                         userdata=self._mg_userdata, protocol=mqtt.MQTTv311,
+                         transport='tcp')
         self.on_connect = _on_connect
         self.on_disconnect = _on_disconnect
         self.on_message = _on_message
         self.on_subscribe = _on_subscribe
+        # set up timer for the reconnect logs - see method below
+        self.log_timer = None
         return
 
-    def lag_end(self):
+    def lag_end(self) -> bool:
         ''' Method to inhibit the connection test during the lag.
 
         One of the feature added by this class over the standard PAHO class is the
@@ -200,14 +124,13 @@ class mgClient(mqtt.Client):
 
         See :py:mod:`lag_end` for more information on the *lag feature*.
         '''
-        LOG.debug(''.join(('Attempt connection to host: ', str(self._mg_host),
-                           ', port: ', str(self._mg_port),
-                           ', keepalive: ', str(self._mg_keepalive))))
+        LOG.debug('Attempt connection to host: <%s>, port: <%s>, keepalive: <%s>',
+                  self._mg_host, self._mg_port, self._mg_keepalive)
         try:
-            super(mgClient, self).connect(self._mg_host, self._mg_port, self._mg_keepalive)
+            super().connect(self._mg_host, self._mg_port, self._mg_keepalive)
         except (OSError, IOError) as err:
             # the loop will try to reconnect anyway so just log an info
-            LOG.info(''.join(('Client can''t connect to broker with error ', str(err))))
+            LOG.info('Client can not connect to broker with error %s', err)
         # reset the 'lag' in any case, no point asking to reconnect straight away if it failed
         self.lag_reset()
         return
@@ -215,9 +138,9 @@ class mgClient(mqtt.Client):
     def mg_reconnect(self):
         ''' Sets up the *lag* feature on top of the parent method.'''
         try:
-            super(mgClient, self).reconnect()
+            super().reconnect()
         except (OSError, IOError) as err:
-            LOG.info(''.join(('Client can''t reconnect to broker with error ', str(err))))
+            LOG.info('Client can not reconnect to broker with error %s', err)
         self.lag_reset()
         return
 
@@ -234,7 +157,80 @@ class mgClient(mqtt.Client):
             if not self.mg_connected:
                 try: self.mg_reconnect() # try to reconnect
                 except (OSError, IOError): # still no connection
-                    try: raise connectionError('Client can''t reconnect to broker.')
-                    except connectionError as err: # not very elegant but works
-                        if err.trigger: LOG.error(err.report)
-        super(mgClient, self).loop(timeout)
+                    if self.log_timer is None or (time.monotonic() - self.log_timer > _THROTTLELAG):
+                        LOG.warning('Client can not reconnect to broker.')
+                        self.log_timer = time.monotonic()
+        super().loop(timeout)
+
+def mqttmsg_str(mqttmsg: internalMsg) -> str:
+    ''' Returns a string representing the MQTT message object.
+
+    As a reminder, the topic is unicode and the payload is binary.
+    TODO: transfer this code to the class itself.
+    '''
+    return f"Topic: <{mqttmsg.topic}> - Payload: <{mqttmsg.payload.decode(ENCODING)}>."
+
+def _on_connect(client: mgClient, userdata: any, # pylint: disable=unused-argument
+                flags: dict, return_code: int):
+    ''' The MQTT callback when a connection is established.
+
+    It sets to True the ``connected`` attribute and subscribes to the
+    topics available in the message map.
+
+    As a reminder, the ``flags`` argument is a dictionary with at least
+    the key ``session present`` (with a space!) which will be 1 if the session
+    is already present.
+    '''
+    try: session_present = flags['session present']
+    except KeyError: session_present = 'Info Not Available'
+    LOG.debug('Session Present flag : %s', session_present)
+    if return_code != 0: # failed
+        LOG.warning('Connection failed with result code <%s>: %s',
+                    return_code, _MQTT_RC[return_code])
+        return
+    LOG.info('Connected! Result message: %s', _MQTT_RC[return_code])
+    client.mg_connected = True
+    try:
+        (result, mid) = client.subscribe(client.mg_topics)
+    except ValueError as err:
+        LOG.warning('Topic subscription <%s> error: %s', client.mg_topics, err)
+    else:
+        if result == mqtt.MQTT_ERR_NO_CONN:
+            LOG.warning('Attempt to subscribe without connection.')
+        elif result != mqtt.MQTT_ERR_SUCCESS:
+            LOG.warning('Unrecognised result <%s> during subscription.', result)
+        else:
+            LOG.info('Message id <%s>: subscriptions successful to (topics, qos): %s',
+                     mid, client.mg_topics)
+    return
+
+def _on_subscribe(client: mgClient, userdata: any, # pylint: disable=unused-argument
+                  mid: str, granted_qos: list):
+    ''' The MQTT callback when a subscription is completed.
+
+    Only implemented for debug purposes.
+    '''
+    LOG.debug('Subscription id <%s> with (list of) qos %s', mid, granted_qos)
+    return
+
+def _on_disconnect(client: mgClient, userdata: any, # pylint: disable=unused-argument
+                   return_code: int):
+    ''' The MQTT callback when a disconnection occurs.
+
+    It sets to False the ``mg_connected`` attribute.
+    '''
+    LOG.info('Client has disconnected with code <%s>.', return_code)
+    client.mg_connected = False
+    return
+
+def _on_message(client: mgClient, userdata: any, # pylint: disable=unused-argument
+                mqtt_msg: internalMsg):
+    ''' The MQTT callback when a message is received from the MQTT broker.
+
+    The message (topic and payload) is mapped into its internal representation and
+    then appended to the incoming message list for the gateway interface to
+    execute it later.
+    '''
+    LOG.debug('MQTT message received: %s', mqttmsg_str(mqtt_msg))
+    userdata['mgClient'].on_msg_func(mqtt_msg)
+    return

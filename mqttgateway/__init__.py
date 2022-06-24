@@ -45,10 +45,10 @@ This package has 4 *groups* of files:
 
 '''
 
-#import sys
-#PY2 = sys.version_info[0]==2
+VERSION = '2.0.0'
 
-ENCODING = 'utf-8'
 LIBRARY_NAME = 'mqttgateway'
 
-__version__ = '2.0.0'
+ENCODING = 'utf-8'
+
+END_THREAD = object()
