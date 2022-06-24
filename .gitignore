@@ -106,4 +106,7 @@ ENV/
 
 /notebooks
 /local
-TODO.md
+/TODO.md
+/LOG.md
+/CHANGELOG.md
+/entry
