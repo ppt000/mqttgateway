@@ -5,6 +5,8 @@
 
 .. admonition:: After a 2 years pause, it's finally back... 
 
+**⚠ After a 2 years pause, it's finally back... 😀**
+ 
 ######################
 Welcome to mqttgateway
 ######################
