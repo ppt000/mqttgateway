@@ -1,0 +1,56 @@
+{
+    "root": "testmqttgtw",
+    "topics": ["testmqttgtw/+/dummy/+/+/+/C",
+               "testmqttgtw/dummyfunction/+/+/+/+/C"],
+	"function": {
+        "maptype": "loose",
+		"map": {
+			"AudioVideo": ["audiovideo"],
+			"Lighting": ["lighting"],
+			"DummyFunction": ["dummyfunction"]
+		}
+	},
+    "gateway": {
+        "maptype": "strict",
+        "map": {
+            "": [""],
+            "Dummy": ["dummy"]
+        }
+    },
+    "location": {
+        "maptype": "loose",
+        "map": {
+            "DiningRm": ["dining_room"],
+            "Office": ["office"],
+            "Kitchen": ["kitchen"]
+        }
+    },
+    "device": {
+        "maptype": "none"
+    },
+	"sender": {
+		"maptype": "none"
+	},
+	"action": {
+        "maptype": "strict",
+		"map": {
+			"POWER_ON": ["audio_on"],
+			"VOL_UP": ["volume_up"],
+			"SOURCE_CD": ["source_cd"],
+			"MUTE_TGL": ["mute_toggle"],
+			"POWER_OFF": ["audio_off"],
+			"MUTE_OFF": ["mute_off"],
+			"MUTE_ON": ["mute_on"],
+			"VOL_DN": ["volume_down"],
+			"SOURCE_TUNER": ["source_tuner"],
+			"LIGHT_OFF": ["light_off"],
+			"LIGHT_ON": ["light_on"]
+		}
+	},
+    "argkey": {
+        "maptype": "none"
+    },
+	"argvalue": {
+		"maptype": "none"
+	}
+}

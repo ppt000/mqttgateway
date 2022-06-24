@@ -1,0 +1,100 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Map files for mqtt_gateways",
+    "description": "",
+    "definitions": {
+        "mapschema": {
+            "description": "Data for map.",
+            "type": "object",
+            "properties": {
+                "maptype": {
+                    "description": "Type of mapping, one of <none>, <loose> or <strict>",
+                    "type": "string",
+                    "enum": [
+                        "none",
+                        "loose",
+                        "strict"
+                    ]
+                },
+                "map": {
+                    "description": "Actual map data in the form of <key: [list of values]> pair, internal keyword first.",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "required": [
+                "maptype"
+            ],
+            "if": {
+                "properties": {
+                    "maptype": {
+                        "enum": [
+                            "loose",
+                            "strict"
+                        ]
+                    }
+                }
+            },
+            "then": {
+                "required": [
+                    "map"
+                ]
+            }
+        }
+    },
+    "type": "object",
+    "properties": {
+        "root": {
+            "description": "Token to use at the beginning of every MQTT topic",
+            "type": "string"
+        },
+        "topics": {
+            "description": "List of topics to subscribe to.",
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "function": {
+            "$ref": "#/definitions/mapschema"
+        },
+        "gateway": {
+            "$ref": "#/definitions/mapschema"
+        },
+        "location": {
+            "$ref": "#/definitions/mapschema"
+        },
+        "device": {
+            "$ref": "#/definitions/mapschema"
+        },
+        "sender": {
+            "$ref": "#/definitions/mapschema"
+        },
+        "action": {
+            "$ref": "#/definitions/mapschema"
+        },
+        "argkey": {
+            "$ref": "#/definitions/mapschema"
+        },
+        "argvalue": {
+            "$ref": "#/definitions/mapschema"
+        }
+    },
+    "required": [
+        "root",
+        "topics",
+        "function",
+        "gateway",
+        "location",
+        "device",
+        "sender",
+        "action",
+        "argkey",
+        "argvalue"
+    ]
+}
